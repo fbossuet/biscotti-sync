@@ -68,45 +68,59 @@ async function getWebflowItems() {
 // 3. CRÉER/METTRE À JOUR DANS WEBFLOW
 // ========================================
 async function syncToWebflow(products) {
-  console.log('🔄 Synchronisation vers Webflow CMS...\n');
-  
-  const existingItems = await getWebflowItems();
-  
-  let created = 0;
-  let updated = 0;
-  let errors = 0;
-  
+  console.log('\n🔄 Synchronisation vers Webflow CMS...\n');
+
+  const stats = {
+    created: 0,
+    updated: 0,
+    errors: 0
+  };
+
   for (const product of products) {
     try {
-      // Données basiques du produit
-      const firstVariant = product.variants?.[0] || {};
-      const firstImage = product.images?.[0];
-      
+      // Préparer les données pour Webflow avec VOS champs
       const webflowData = {
-        isArchived: false,
-        isDraft: false,
         fieldData: {
-          name: product.title || 'Sans titre',
-          slug: product.handle || product.title?.toLowerCase().replace(/\s+/g, '-') || 'produit',
-          'product-description': product.body_html || '',
-          price: parseFloat(firstVariant.price) || 0,
-          'product-id': product.id.toString(),
-          // Image principale (si elle existe)
-          ...(firstImage ? { 'main-image': { url: firstImage.src } } : {})
+          name: product.title,
+          slug: product.handle,
+          description: product.body_html || product.description || '',
+          prix: parseFloat(product.variants[0]?.price || 0),
+          'shopify-product-id': product.id.toString(),
+          'shopify-handle': product.handle,
+          'produit-du-moment': false, // Par défaut
+          'date-disponibilite': '', // Vide par défaut
+          'encart-vert': '' // Vide par défaut
         }
       };
 
+      // Ajouter l'image principale si elle existe
+      if (product.image?.src) {
+        webflowData.fieldData['image-principale'] = {
+          url: product.image.src,
+          alt: product.image.alt || product.title
+        };
+      }
+
       // Vérifier si le produit existe déjà
-      const existingItem = existingItems.find(
-        item => item.fieldData?.['product-id'] === product.id.toString()
+      const existingResponse = await fetch(
+        `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items`,
+        {
+          headers: {
+            'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
+            'accept': 'application/json'
+          }
+        }
       );
 
-      let response;
-      
-      if (existingItem) {
-        // METTRE À JOUR
-        response = await fetch(
-          `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/${existingItem.id}`,
+      const existingData = await existingResponse.json();
+      const existingProduct = existingData.items?.find(
+        item => item.fieldData['shopify-product-id'] === product.id.toString()
+      );
+
+      if (existingProduct) {
+        // Mise à jour du produit existant
+        const updateResponse = await fetch(
+          `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/${existingProduct.id}`,
           {
             method: 'PATCH',
             headers: {
@@ -117,14 +131,18 @@ async function syncToWebflow(products) {
             body: JSON.stringify(webflowData)
           }
         );
-        
-        if (response.ok) {
-          console.log(`🔄 Mis à jour : ${product.title}`);
-          updated++;
+
+        if (updateResponse.ok) {
+          console.log(`   🔄 Mis à jour : ${product.title}`);
+          stats.updated++;
+        } else {
+          const error = await updateResponse.json();
+          console.error(`   ❌ Erreur pour ${product.title}:`, error);
+          stats.errors++;
         }
       } else {
-        // CRÉER
-        response = await fetch(
+        // Création d'un nouveau produit
+        const createResponse = await fetch(
           `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items`,
           {
             method: 'POST',
@@ -136,29 +154,27 @@ async function syncToWebflow(products) {
             body: JSON.stringify(webflowData)
           }
         );
-        
-        if (response.ok) {
-          console.log(`✅ Créé : ${product.title}`);
-          created++;
+
+        if (createResponse.ok) {
+          console.log(`   ✅ Créé : ${product.title}`);
+          stats.created++;
+        } else {
+          const error = await createResponse.json();
+          console.error(`   ❌ Erreur pour ${product.title}:`, error);
+          stats.errors++;
         }
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error(`❌ Erreur pour ${product.title}:`, errorData);
-        errors++;
-      }
+      // Pause pour respecter les limites de l'API
+      await new Promise(resolve => setTimeout(resolve, 500));
 
     } catch (error) {
-      console.error(`❌ Erreur pour ${product.title}:`, error.message);
-      errors++;
+      console.error(`   ❌ Erreur pour ${product.title}:`, error.message);
+      stats.errors++;
     }
   }
 
-  console.log('\n📊 RÉSUMÉ :');
-  console.log(`   ✅ Créés : ${created}`);
-  console.log(`   🔄 Mis à jour : ${updated}`);
-  console.log(`   ❌ Erreurs : ${errors}`);
+  return stats;
 }
 
 // ========================================
