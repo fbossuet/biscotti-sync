@@ -10,17 +10,32 @@ const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
 const WEBFLOW_COLLECTION_ID = process.env.WEBFLOW_COLLECTION_ID;
 
 // ========================================
-// 🧹 NETTOYER LES METAFIELDS
+// 🧹 NETTOYER LES METAFIELDS (VERSION CORRIGÉE)
 // ========================================
 function cleanMetafieldValue(value) {
   if (!value) return '';
   
+  // Si c'est une chaîne qui ressemble à un tableau JSON
+  if (typeof value === 'string' && value.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(value);
+      // Si c'est un tableau, prendre le premier élément
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed[0].toString();
+      }
+    } catch (e) {
+      // Si le parsing échoue, continuer avec le traitement normal
+    }
+  }
+  
   // Si c'est déjà une chaîne simple, retourner directement
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') {
+    return value.replace(/^["']|["']$/g, ''); // Enlever les guillemets de début/fin
+  }
   
   // Si c'est un objet avec une propriété 'value'
   if (value && typeof value === 'object' && 'value' in value) {
-    return value.value?.toString() || '';
+    return cleanMetafieldValue(value.value); // Appel récursif
   }
   
   return '';
