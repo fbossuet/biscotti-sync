@@ -131,111 +131,115 @@ async function fetchShopifyProducts() {
 // ========================================
 // 🔄 SYNCHRONISATION VERS WEBFLOW
 // ========================================
+// ========================================
+// 🔄 SYNCHRONISATION VERS WEBFLOW
+// ========================================
 async function syncToWebflow(products) {
-  console.log('\n🔄 Synchronisation vers Webflow CMS...\n');
+  console.log('🔄 Synchronisation vers Webflow CMS...\n');
+  
+  const stats = { created: 0, updated: 0, errors: 0 };
 
-  const stats = {
-    created: 0,
-    updated: 0,
-    errors: 0
-  };
+  // 1. Récupérer tous les produits existants dans Webflow
+  console.log('📋 Récupération des produits existants dans Webflow...');
+  const existingProducts = await fetchAllWebflowItems();
+  
+  // Créer un index par slug pour recherche rapide
+  const existingBySlug = {};
+  const existingByShopifyId = {};
+  
+  existingProducts.forEach(item => {
+    if (item.fieldData.slug) {
+      existingBySlug[item.fieldData.slug] = item.id;
+    }
+    if (item.fieldData['shopify-product-id']) {
+      existingByShopifyId[item.fieldData['shopify-product-id']] = item.id;
+    }
+  });
 
+  console.log(`   ✅ ${existingProducts.length} produits trouvés dans Webflow\n`);
+
+  // 2. Synchroniser chaque produit
   for (const product of products) {
     try {
-      // Préparer les données pour Webflow
+      // Extraire l'ID numérique de Shopify
+      const shopifyId = product.id.replace('gid://shopify/Product/', '');
+      
+      // Préparer les données
       const webflowData = {
         fieldData: {
           name: product.title,
           slug: product.handle,
-          description: product.body_html || '',
-          prix: product.variants[0]?.price?.toString() || '0',
-          'shopify-product-id': product.id.toString(),
+          description: product.descriptionHtml || '',
+          prix: product.price?.toString() || '0',
+          'shopify-product-id': shopifyId,
           'shopify-handle': product.handle,
           
-          // Metafields Shopify → Webflow
+          // Metafields
           'produit-du-moment': 
-            product.metafields['custom.produit_du_moment'] === 'true' || 
+            product.metafields['custom.produit_du_moment'] === 'true' ||
             product.metafields['custom.produit_du_moment'] === 'Vrai' ||
-            product.metafields['custom.produit_du_moment'] === '1',
-            
+            product.metafields['custom.produit_du_moment'] === true,
           'encart-vert': product.metafields['custom.encart_vert'] || '',
-          
           'date-disponibilite': product.metafields['custom.date_disponibilite'] || ''
         }
       };
 
-      // Ajouter l'image principale si elle existe
-      if (product.image?.src) {
+      // Image principale
+      if (product.imageUrl) {
         webflowData.fieldData['image-principale'] = {
-          url: product.image.src,
-          alt: product.image.alt || product.title
+          url: product.imageUrl,
+          alt: product.imageAlt || product.title
         };
       }
 
-      // Vérifier si le produit existe déjà dans Webflow
-      const existingItemsResponse = await fetch(
-        `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items?fieldData[shopify-product-id]=${product.id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
-            'accept': 'application/json'
-          }
-        }
-      );
+      // 3. Vérifier si le produit existe déjà
+      const existingItemId = existingByShopifyId[shopifyId] || existingBySlug[product.handle];
 
-      if (!existingItemsResponse.ok) {
-        throw new Error(`Erreur vérification: ${existingItemsResponse.status}`);
-      }
-
-      const existingItems = await existingItemsResponse.json();
-
-      if (existingItems.items && existingItems.items.length > 0) {
-        // Produit existe → MISE À JOUR
-        const itemId = existingItems.items[0].id;
-        
+      if (existingItemId) {
+        // ✅ MISE À JOUR
         const updateResponse = await fetch(
-          `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/${itemId}`,
+          `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/${existingItemId}`,
           {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
-              'accept': 'application/json',
-              'content-type': 'application/json'
+              'Content-Type': 'application/json',
+              'accept': 'application/json'
             },
             body: JSON.stringify(webflowData)
           }
         );
 
         if (updateResponse.ok) {
-          console.log(`   ✅ Mis à jour : ${product.title}`);
+          console.log(`   🔄 Mis à jour: ${product.title}`);
           stats.updated++;
         } else {
-          const error = await updateResponse.json();
-          console.error(`   ❌ Erreur MAJ ${product.title}:`, error);
+          const errorData = await updateResponse.json();
+          console.log(`   ❌ Erreur MAJ ${product.title}:`, errorData);
           stats.errors++;
         }
 
       } else {
-        // Produit n'existe pas → CRÉATION
+        // ✅ CRÉATION
         const createResponse = await fetch(
           `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items`,
           {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
-              'accept': 'application/json',
-              'content-type': 'application/json'
+              'Content-Type': 'application/json',
+              'accept': 'application/json'
             },
             body: JSON.stringify(webflowData)
           }
         );
 
         if (createResponse.ok) {
-          console.log(`   ✅ Créé : ${product.title}`);
+          console.log(`   ✅ Créé: ${product.title}`);
           stats.created++;
         } else {
-          const error = await createResponse.json();
-          console.error(`   ❌ Erreur création ${product.title}:`, error);
+          const errorData = await createResponse.json();
+          console.log(`   ❌ Erreur création ${product.title}:`, errorData);
           stats.errors++;
         }
       }
@@ -244,13 +248,65 @@ async function syncToWebflow(products) {
       await new Promise(resolve => setTimeout(resolve, 1100));
 
     } catch (error) {
-      console.error(`   ❌ Erreur pour ${product.title}:`, error.message);
+      console.log(`   ❌ Erreur pour ${product.title}:`, error.message);
       stats.errors++;
     }
   }
 
   return stats;
 }
+
+// ========================================
+// 📋 RÉCUPÉRER TOUS LES ITEMS WEBFLOW
+// ========================================
+async function fetchAllWebflowItems() {
+  const allItems = [];
+  let offset = 0;
+  const limit = 100;
+
+  while (true) {
+    try {
+      const response = await fetch(
+        `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items?limit=${limit}&offset=${offset}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
+            'accept': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.items || data.items.length === 0) {
+        break;
+      }
+
+      allItems.push(...data.items);
+      
+      // Si on a récupéré moins que la limite, c'est la dernière page
+      if (data.items.length < limit) {
+        break;
+      }
+
+      offset += limit;
+
+      // Pause pour respecter les limites de l'API
+      await new Promise(resolve => setTimeout(resolve, 1100));
+
+    } catch (error) {
+      console.error('Erreur lors de la récupération des items Webflow:', error.message);
+      break;
+    }
+  }
+
+  return allItems;
+}
+
 
 // ========================================
 // 🚀 FONCTION PRINCIPALE
