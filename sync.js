@@ -4,8 +4,8 @@ import fetch from 'node-fetch';
 // ========================================
 // 🔐 CONFIGURATION
 // ========================================
-const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
-const SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+const SHOPIFY_STORE = process.env.SHOPIFY_DOMAIN;  // ✅ CHANGÉ
+const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;   // ✅ CHANGÉ
 const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
 const WEBFLOW_COLLECTION_ID = process.env.WEBFLOW_COLLECTION_ID;
 
