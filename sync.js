@@ -84,7 +84,7 @@ async function syncToWebflow(products) {
           name: product.title,
           slug: product.handle,
           description: product.body_html || product.description || '',
-          prix: parseFloat(product.variants[0]?.price || 0),
+          prix: product.variants[0]?.price?.toString() || '0',
           'shopify-product-id': product.id.toString(),
           'shopify-handle': product.handle,
           'produit-du-moment': false, // Par défaut
