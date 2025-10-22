@@ -50,6 +50,31 @@ function cleanMetafieldValue(value) {
 }
 
 // ========================================
+// 🧹 NETTOYER LE HTML (enlever les balises)
+// ========================================
+function cleanHtml(html) {
+  if (!html) return '';
+  
+  return html
+    // Remplacer les <br> et <br/> par des retours à la ligne
+    .replace(/<br\s*\/?>/gi, '\n')
+    // Remplacer les </p> par double retour à la ligne
+    .replace(/<\/p>/gi, '\n\n')
+    // Enlever toutes les autres balises HTML
+    .replace(/<[^>]*>/g, '')
+    // Décoder les entités HTML
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    // Nettoyer les espaces multiples
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// ========================================
 // 🛍️ RÉCUPÉRER LES PRODUITS SHOPIFY
 // ========================================
 async function fetchShopifyProducts() {
