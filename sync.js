@@ -82,6 +82,18 @@ async function fetchShopifyProducts() {
             handle
             tags
             descriptionHtml
+            featuredImage {
+              url
+              altText
+            }
+            images(first: 10) {
+              edges {
+                node {
+                  url
+                  altText
+                }
+              }
+            }
             variants(first: 1) {
               edges {
                 node {
@@ -104,134 +116,101 @@ async function fetchShopifyProducts() {
     }
   `;
 
-  try {
-    const response = await fetch(
-      `https://${SHOPIFY_STORE}/admin/api/2024-01/graphql.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Access-Token': SHOPIFY_TOKEN
-        },
-        body: JSON.stringify({ query })
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erreur Shopify (${response.status}): ${errorText}`);
+  const response = await fetch(
+    `https://${SHOPIFY_STORE}/admin/api/2024-01/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': SHOPIFY_TOKEN
+      },
+      body: JSON.stringify({ query })
     }
+  );
 
-    const data = await response.json();
+  const data = await response.json();
 
-    if (data.errors) {
-      throw new Error(`Erreur GraphQL: ${JSON.stringify(data.errors)}`);
-    }
+  if (data.errors) {
+    throw new Error(`Erreur Shopify: ${JSON.stringify(data.errors)}`);
+  }
 
-    const products = data.data.products.edges.map(edge => {
-      const product = edge.node;
-      
-      // Extraire le prix
-      const price = product.variants?.edges?.[0]?.node?.price || '0';
-      
-      // Convertir les metafields en objet clé-valeur
-      const metafields = {};
+  console.log(`✅ ${data.data.products.edges.length} produits récupérés\n`);
+
+  // Mapper les produits avec TOUTES les données
+  const products = data.data.products.edges.map(edge => {
+    const product = edge.node;
+
+    // Prix
+    const price = product.variants?.edges?.[0]?.node?.price || '0';
+
+    // Metafields
+    const metafields = {};
+    if (product.metafields?.edges) {
       product.metafields.edges.forEach(({ node }) => {
         const key = `${node.namespace}.${node.key}`;
         metafields[key] = node.value;
       });
-
-      return {
-        id: product.id,
-        title: product.title,
-        handle: product.handle,
-        descriptionHtml: product.descriptionHtml,
-        price: price,
-        metafields: metafields,
-        tags: product.tags ? product.tags.join(', ') : ''
-      };
-    });
-
-    console.log(`✅ ${products.length} produits récupérés\n`);
-    return products;
-
-  } catch (error) {
-    throw new Error(`Erreur lors de la récupération Shopify: ${error.message}`);
-  }
-}
-
-// ========================================
-// 📤 RÉCUPÉRER LES ITEMS EXISTANTS DANS WEBFLOW
-// ========================================
-async function fetchWebflowItems() {
-  console.log('📦 Récupération des items existants dans Webflow...\n');
-
-  try {
-    const response = await fetch(
-      `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
-          'accept': 'application/json'
-        }
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erreur Webflow (${response.status}): ${errorText}`);
     }
 
-    const data = await response.json();
-    console.log(`✅ ${data.items?.length || 0} items trouvés dans Webflow\n`);
+    // 🖼️ IMAGE PRINCIPALE (featuredImage)
+    const featuredImage = product.featuredImage?.url || null;
     
-    return data.items || [];
+    // 🖼️ TOUTES LES IMAGES
+    const allImages = product.images?.edges?.map(edge => edge.node.url) || [];
 
-  } catch (error) {
-    throw new Error(`Erreur lors de la récupération Webflow: ${error.message}`);
-  }
+    console.log(`📦 Produit: ${product.title}`);
+    console.log(`   🖼️  Featured Image: ${featuredImage || '❌ AUCUNE'}`);
+    console.log(`   🖼️  Nombre total d'images: ${allImages.length}`);
+    if (allImages.length > 0) {
+      console.log(`   🖼️  URLs des images:`);
+      allImages.forEach((url, i) => {
+        console.log(`      ${i + 1}. ${url}`);
+      });
+    }
+    console.log('');
+
+    return {
+      id: product.id,
+      title: product.title,
+      handle: product.handle,
+      descriptionHtml: product.descriptionHtml,
+      price: price,
+      metafields: metafields,
+      tags: product.tags ? product.tags.join(', ') : '',
+      featuredImage: featuredImage,
+      images: allImages
+    };
+  });
+
+  return products;
 }
 
 // ========================================
-// 🔄 SYNCHRONISER VERS WEBFLOW
+// 📤 SYNCHRONISER VERS WEBFLOW
 // ========================================
 async function syncToWebflow(products) {
-  console.log('🔄 Début de la synchronisation vers Webflow...\n');
+  console.log('🔄 Synchronisation vers Webflow...\n');
 
   const stats = {
     created: 0,
     updated: 0,
+    published: 0,
     errors: 0
   };
 
-  // Récupérer les items existants
-  const existingItems = await fetchWebflowItems();
-  
-  // Créer un index par shopify-product-id
-  const existingItemsMap = {};
-  existingItems.forEach(item => {
-    const shopifyId = item.fieldData['shopify-product-id'];
-    if (shopifyId) {
-      existingItemsMap[shopifyId] = item;
-    }
-  });
-
-  // Traiter chaque produit
   for (const product of products) {
     try {
       console.log(`🔍 Traitement: ${product.title}`);
       console.log(`   Slug: ${product.handle}`);
-
-      // Extraire l'ID numérique de Shopify
+      
+      // Extraire l'ID numérique
       const shopifyId = product.id.split('/').pop();
       console.log(`   Shopify ID: ${shopifyId}`);
       console.log(`   Tags: ${product.tags || 'Aucun'}`);
+      console.log(`   🖼️  Image principale: ${product.featuredImage ? '✅ OUI' : '❌ NON'}`);
+      console.log(`   🖼️  Nombre d'images: ${product.images.length}`);
 
-      // Vérifier si le produit existe déjà
-      const existingItem = existingItemsMap[shopifyId];
-
-      // Préparer les données
+      // Préparer les données pour Webflow
       const webflowData = {
         fieldData: {
           name: product.title,
@@ -240,7 +219,7 @@ async function syncToWebflow(products) {
           prix: product.price?.toString() || '0',
           'shopify-product-id': shopifyId,
           'shopify-handle': product.handle,
-          balise: product.tags || '',
+          balises: product.tags || '',
           
           // Metafields nettoyés
           'produit-du-moment': 
@@ -253,7 +232,36 @@ async function syncToWebflow(products) {
         }
       };
 
-      // Mise à jour ou création
+      // 🖼️ AJOUTER L'IMAGE PRINCIPALE SI ELLE EXISTE
+      if (product.featuredImage) {
+        console.log(`   🖼️  Ajout de l'image: ${product.featuredImage}`);
+        webflowData.fieldData['image-principale'] = {
+          url: product.featuredImage
+        };
+      } else {
+        console.log(`   ⚠️  Aucune image principale trouvée`);
+      }
+
+      console.log(`   📋 Données à envoyer:`, JSON.stringify(webflowData, null, 2));
+
+      // Vérifier si le produit existe déjà
+      const searchResponse = await fetch(
+        `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items?cmsLocaleId=679abc5615e8e935d6e7d801`,
+        {
+          headers: {
+            'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
+            'accept': 'application/json'
+          }
+        }
+      );
+
+      const existingItems = await searchResponse.json();
+      const existingItem = existingItems.items?.find(
+        item => item.fieldData?.['shopify-product-id'] === shopifyId
+      );
+
+      let itemId = null;
+
       if (existingItem) {
         console.log(`   🔄 Tentative de MISE À JOUR...`);
         
@@ -271,10 +279,11 @@ async function syncToWebflow(products) {
         );
 
         const responseText = await updateResponse.text();
-        
+
         if (updateResponse.ok) {
           console.log(`   ✅ MIS À JOUR avec succès`);
           stats.updated++;
+          itemId = existingItem.id;
         } else {
           console.log(`   ❌ ERREUR lors de la mise à jour:`);
           console.log(`   Status: ${updateResponse.status}`);
@@ -298,16 +307,45 @@ async function syncToWebflow(products) {
           }
         );
 
-        const responseText = await createResponse.text();
+        const responseData = await createResponse.json();
 
         if (createResponse.ok) {
           console.log(`   ✅ CRÉÉ avec succès`);
           stats.created++;
+          itemId = responseData.id;
         } else {
           console.log(`   ❌ ERREUR lors de la création:`);
           console.log(`   Status: ${createResponse.status}`);
-          console.log(`   Réponse:`, responseText);
+          console.log(`   Réponse:`, JSON.stringify(responseData, null, 2));
           stats.errors++;
+        }
+      }
+
+      // 🚀 PUBLIER L'ITEM AUTOMATIQUEMENT
+      if (itemId) {
+        console.log(`   📢 Publication de l'item...`);
+        
+        const publishResponse = await fetch(
+          `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/publish`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
+              'Content-Type': 'application/json',
+              'accept': 'application/json'
+            },
+            body: JSON.stringify({
+              itemIds: [itemId]
+            })
+          }
+        );
+
+        if (publishResponse.ok) {
+          console.log(`   ✅ PUBLIÉ avec succès`);
+          stats.published++;
+        } else {
+          const publishError = await publishResponse.text();
+          console.log(`   ⚠️  Erreur de publication:`, publishError);
         }
       }
 
@@ -349,6 +387,7 @@ async function main() {
     console.log('═══════════════════════════════════════════════════════');
     console.log(`✅ Créés:      ${stats.created}`);
     console.log(`🔄 Mis à jour: ${stats.updated}`);
+    console.log(`📢 Publiés:    ${stats.published}`);
     console.log(`❌ Erreurs:    ${stats.errors}`);
     console.log(`📦 Total:      ${products.length}`);
     console.log('═══════════════════════════════════════════════════════\n');
