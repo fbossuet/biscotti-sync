@@ -240,7 +240,7 @@ async function syncToWebflow(products) {
           prix: product.price?.toString() || '0',
           'shopify-product-id': shopifyId,
           'shopify-handle': product.handle,
-          balises: product.tags || '',
+          balise: product.tags || '',
           
           // Metafields nettoyés
           'produit-du-moment': 
