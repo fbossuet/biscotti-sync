@@ -274,7 +274,7 @@ async function createWebflowItem(product) {
       'prix': product.price,
       'shopify-product-id': product.id,
       'shopify-handle': product.handle,
-      'balises': product.tags,
+      'balise': product.tags,
       
       'produit-du-moment': product.metafields.produitDuMoment === 'true',
       'encart-vert': product.metafields.encartVert,
