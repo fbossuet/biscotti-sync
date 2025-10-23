@@ -80,6 +80,7 @@ async function fetchShopifyProducts() {
             id
             title
             handle
+            tags
             descriptionHtml
             variants(first: 1) {
               edges {
@@ -135,12 +136,10 @@ async function fetchShopifyProducts() {
       
       // Convertir les metafields en objet clé-valeur
       const metafields = {};
-      if (product.metafields?.edges) {
-        product.metafields.edges.forEach(({ node }) => {
-          const key = `${node.namespace}.${node.key}`;
-          metafields[key] = node.value;
-        });
-      }
+      product.metafields.edges.forEach(({ node }) => {
+        const key = `${node.namespace}.${node.key}`;
+        metafields[key] = node.value;
+      });
 
       return {
         id: product.id,
@@ -148,128 +147,89 @@ async function fetchShopifyProducts() {
         handle: product.handle,
         descriptionHtml: product.descriptionHtml,
         price: price,
-        metafields: metafields
+        metafields: metafields,
+        tags: product.tags ? product.tags.join(', ') : ''
       };
     });
 
-    console.log(`   ✅ ${products.length} produits récupérés depuis Shopify\n`);
-    
-    // Debug : afficher les metafields du premier produit
-    if (products.length > 0) {
-      console.log('📋 Exemple de metafields du premier produit:');
-      console.log(JSON.stringify(products[0].metafields, null, 2));
-      console.log('');
-    }
-
+    console.log(`✅ ${products.length} produits récupérés\n`);
     return products;
 
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des produits Shopify:', error.message);
-    throw error;
+    throw new Error(`Erreur lors de la récupération Shopify: ${error.message}`);
   }
 }
 
 // ========================================
-// 📥 RÉCUPÉRER TOUS LES ITEMS WEBFLOW
+// 📤 RÉCUPÉRER LES ITEMS EXISTANTS DANS WEBFLOW
 // ========================================
-async function fetchAllWebflowItems() {
-  let allItems = [];
-  let offset = 0;
-  const limit = 100;
-  let hasMore = true;
+async function fetchWebflowItems() {
+  console.log('📦 Récupération des items existants dans Webflow...\n');
 
-  while (hasMore) {
-    try {
-      const response = await fetch(
-        `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items?limit=${limit}&offset=${offset}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
-            'accept': 'application/json'
-          }
+  try {
+    const response = await fetch(
+      `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
+          'accept': 'application/json'
         }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erreur Webflow (${response.status}): ${errorText}`);
       }
+    );
 
-      const data = await response.json();
-      
-      if (data.items && data.items.length > 0) {
-        allItems = allItems.concat(data.items);
-        offset += limit;
-        
-        // Vérifier s'il y a plus d'items
-        hasMore = data.items.length === limit;
-      } else {
-        hasMore = false;
-      }
-
-      // Pause pour respecter les limites de l'API
-      if (hasMore) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-
-    } catch (error) {
-      console.error('❌ Erreur lors de la récupération des items Webflow:', error.message);
-      throw error;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur Webflow (${response.status}): ${errorText}`);
     }
-  }
 
-  return allItems;
+    const data = await response.json();
+    console.log(`✅ ${data.items?.length || 0} items trouvés dans Webflow\n`);
+    
+    return data.items || [];
+
+  } catch (error) {
+    throw new Error(`Erreur lors de la récupération Webflow: ${error.message}`);
+  }
 }
 
 // ========================================
 // 🔄 SYNCHRONISER VERS WEBFLOW
 // ========================================
 async function syncToWebflow(products) {
-  console.log('🔄 Synchronisation vers Webflow...\n');
-  
+  console.log('🔄 Début de la synchronisation vers Webflow...\n');
+
   const stats = {
     created: 0,
     updated: 0,
     errors: 0
   };
 
-  // 1. Récupérer TOUS les items existants dans Webflow
-  console.log('📥 Récupération des items Webflow existants...');
-  const existingItems = await fetchAllWebflowItems();
-  console.log(`   ✅ ${existingItems.length} items trouvés dans Webflow\n`);
-
-  // 2. Créer un index par slug ET par shopify-product-id
-  const itemsBySlug = {};
-  const itemsByShopifyId = {};
+  // Récupérer les items existants
+  const existingItems = await fetchWebflowItems();
   
+  // Créer un index par shopify-product-id
+  const existingItemsMap = {};
   existingItems.forEach(item => {
-    if (item.fieldData?.slug) {
-      itemsBySlug[item.fieldData.slug] = item;
-    }
-    if (item.fieldData?.['shopify-product-id']) {
-      itemsByShopifyId[item.fieldData['shopify-product-id']] = item;
+    const shopifyId = item.fieldData['shopify-product-id'];
+    if (shopifyId) {
+      existingItemsMap[shopifyId] = item;
     }
   });
 
-  console.log(`📊 Index créé: ${Object.keys(itemsBySlug).length} slugs, ${Object.keys(itemsByShopifyId).length} IDs Shopify\n`);
-
-  // 3. Traiter chaque produit
+  // Traiter chaque produit
   for (const product of products) {
     try {
-      console.log(`\n🔍 Traitement: ${product.title}`);
+      console.log(`🔍 Traitement: ${product.title}`);
       console.log(`   Slug: ${product.handle}`);
-      
-      const shopifyId = product.id.replace('gid://shopify/Product/', '');
-      console.log(`   Shopify ID: ${shopifyId}`);
 
-      // Chercher le produit existant
-      let existingItem = itemsByShopifyId[shopifyId] || itemsBySlug[product.handle];
-      
-      if (existingItem) {
-        console.log(`   ✅ TROUVÉ dans Webflow (ID: ${existingItem.id})`);
-      } else {
-        console.log(`   ℹ️  PAS TROUVÉ dans Webflow → Création`);
-      }
+      // Extraire l'ID numérique de Shopify
+      const shopifyId = product.id.split('/').pop();
+      console.log(`   Shopify ID: ${shopifyId}`);
+      console.log(`   Tags: ${product.tags || 'Aucun'}`);
+
+      // Vérifier si le produit existe déjà
+      const existingItem = existingItemsMap[shopifyId];
 
       // Préparer les données
       const webflowData = {
@@ -280,6 +240,7 @@ async function syncToWebflow(products) {
           prix: product.price?.toString() || '0',
           'shopify-product-id': shopifyId,
           'shopify-handle': product.handle,
+          balises: product.tags || '',
           
           // Metafields nettoyés
           'produit-du-moment': 
