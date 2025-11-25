@@ -1,12 +1,11 @@
-# .github/workflows/sync.yml
 name: Sync Shopify to Webflow
 
 on:
-  schedule:
-    # - cron: '*/15 * * * *' # Toutes les 15 minutes (décommente si besoin)
-  workflow_dispatch: # Permet de lancer manuellement depuis GitHub
-  repository_dispatch: # 🆕 Permet de lancer via API
+  workflow_dispatch:
+  repository_dispatch:
     types: [trigger-manual]
+  # schedule:
+  #   - cron: '*/15 * * * *'
 
 jobs:
   sync:
@@ -14,15 +13,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-      
       - name: Install dependencies
         run: npm install
-      
       - name: Run sync
         env:
           SHOPIFY_DOMAIN: ${{ secrets.SHOPIFY_DOMAIN }}
