@@ -279,6 +279,7 @@ async function createWebflowItem(product) {
       'produit-du-moment': product.metafields.produitDuMoment === 'true',
       'encart-vert': product.metafields.encartVert,
       'date-disponibilite': product.metafields.dateDisponibilite,
+      'lien-click-and-collect': product.metafields.lienClickAndCollect
     }
   };
 
@@ -328,6 +329,8 @@ async function updateWebflowItem(itemId, product) {
       'produit-du-moment': product.metafields.produitDuMoment === 'true',
       'encart-vert': product.metafields.encartVert,
       'date-disponibilite': product.metafields.dateDisponibilite,
+      'lien-click-and-collect': product.metafields.lienClickAndCollect,
+      'lien-click-and-collect': product.metafields.lienClickAndCollect,
     }
   };
 
