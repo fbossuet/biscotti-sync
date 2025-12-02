@@ -15,6 +15,17 @@ const WEBFLOW_COLLECTION_ID = process.env.WEBFLOW_COLLECTION_ID;
 function cleanMetafieldValue(value) {
   if (!value) return '';
   
+  // Gérer les objets Link Shopify (ex: {"text":"","url":"https://..."})
+  if (typeof value === 'string' && value.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(value);
+      // Si c'est un objet Link avec une URL, retourner juste l'URL
+      if (parsed.url) {
+        return parsed.url;
+      }
+    } catch (e) {}
+  }
+  
   if (typeof value === 'string' && value.trim().startsWith('[')) {
     try {
       const parsed = JSON.parse(value);
