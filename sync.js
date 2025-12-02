@@ -139,7 +139,7 @@ async function fetchShopifyProducts() {
         produitDuMoment: metafields.produitDuMoment || 'false',
         encartVert: metafields.encartVert || '',
         dateDisponibilite: metafields.dateDisponibilite || '',
-        lienClickAndCollect: metafields.lienClickAndCollect || ''
+        lienversClickAndCollect: metafields.lienversClickAndCollect || ''
       }
     };
   });
@@ -280,7 +280,7 @@ async function createWebflowItem(product) {
       'produit-du-moment': product.metafields.produitDuMoment === 'true',
       'encart-vert': product.metafields.encartVert,
       'date-disponibilite': product.metafields.dateDisponibilite,
-      'lien-click-and-collect': product.metafields.lienClickAndCollect
+      'lien-vers-click-and-collect': product.metafields.lienversClickAndCollect
     }
   };
 
@@ -330,7 +330,7 @@ async function updateWebflowItem(itemId, product) {
       'produit-du-moment': product.metafields.produitDuMoment === 'true',
       'encart-vert': product.metafields.encartVert,
       'date-disponibilite': product.metafields.dateDisponibilite,
-      'lien-click-and-collect': product.metafields.lienClickAndCollect
+      'lien-vers-click-and-collect': product.metafields.lienversClickAndCollect
     }
   };
 
