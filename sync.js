@@ -293,7 +293,7 @@ async function createWebflowItem(product) {
       'encart-vert': product.metafields.encartVert,
       'date-disponibilite': product.metafields.dateDisponibilite,
       'lien-vers-click-and-collect': product.metafields.lienversClickAndCollect,
-      'ordre-daffichage' :product.metafields.ordreDaffichage
+      'ordre-d-affichage-5' :product.metafields.ordreDaffichage
     }
   };
 
@@ -344,7 +344,7 @@ async function updateWebflowItem(itemId, product) {
       'encart-vert': product.metafields.encartVert,
       'date-disponibilite': product.metafields.dateDisponibilite,
       'lien-vers-click-and-collect': product.metafields.lienversClickAndCollect,
-      'ordre-daffichage' :product.metafields.ordreDaffichage
+      'ordre-d-affichage-5' :product.metafields.ordreDaffichage
     }
   };
 
