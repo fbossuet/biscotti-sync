@@ -10,7 +10,7 @@ jobs:
         with:
           node-version: '18'
       - run: npm install
-      - run: node check-field-names.js
+      - run: node check-collection-schema.js
         env:
           WEBFLOW_TOKEN: ${{ secrets.WEBFLOW_TOKEN }}
           WEBFLOW_COLLECTION_ID: ${{ secrets.WEBFLOW_COLLECTION_ID }}
