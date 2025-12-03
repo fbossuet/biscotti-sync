@@ -138,7 +138,7 @@ async function fetchShopifyProducts() {
       metafields[camelKey] = cleanMetafieldValue(node.value);
     });
 
-    return {
+    const productData = {
       id: product.id.replace('gid://shopify/Product/', ''),
       title: product.title,
       handle: product.handle,
@@ -154,6 +154,15 @@ async function fetchShopifyProducts() {
         ordreDaffichage: metafields.ordreDaffichage || ''
       }
     };
+    
+    // 🔍 DEBUG - Log des metafields
+    if (product.title.includes('bûche') || product.title.includes('Bûche')) {
+      console.log(`\n📋 DEBUG - Metafields pour "${product.title}":`);
+      console.log('   lienversClickAndCollect:', productData.metafields.lienversClickAndCollect);
+      console.log('   Raw metafields:', JSON.stringify(metafields, null, 2));
+    }
+    
+    return productData;
   });
 
   console.log(`✅ ${products.length} produits récupérés\n`);
@@ -293,7 +302,7 @@ async function createWebflowItem(product) {
       'encart-vert': product.metafields.encartVert,
       'date-disponibilite': product.metafields.dateDisponibilite,
       'lien-vers-click-and-collect': product.metafields.lienversClickAndCollect,
-      'ordre-d-affichage-5' :product.metafields.ordreDaffichage
+      'ordre-daffichage': product.metafields.ordreDaffichage
     }
   };
 
@@ -344,12 +353,18 @@ async function updateWebflowItem(itemId, product) {
       'encart-vert': product.metafields.encartVert,
       'date-disponibilite': product.metafields.dateDisponibilite,
       'lien-vers-click-and-collect': product.metafields.lienversClickAndCollect,
-      'ordre-d-affichage-5' :product.metafields.ordreDaffichage
+      'ordre-daffichage': product.metafields.ordreDaffichage
     }
   };
 
   if (product.image) {
     webflowData.fieldData['image-principale'] = { url: product.image };
+  }
+  
+  // 🔍 DEBUG - Log des données envoyées à Webflow
+  if (product.title.includes('bûche') || product.title.includes('Bûche')) {
+    console.log(`\n📤 DEBUG - Données envoyées à Webflow pour "${product.title}":`);
+    console.log('   lien-vers-click-and-collect:', webflowData.fieldData['lien-vers-click-and-collect']);
   }
 
   const response = await fetch(
