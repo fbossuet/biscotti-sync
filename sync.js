@@ -10,6 +10,15 @@ const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
 const WEBFLOW_COLLECTION_ID = process.env.WEBFLOW_COLLECTION_ID;
 
 // ========================================
+// 🎯 ENVIRONNEMENT (staging | production)
+// ========================================
+const ENV = process.argv[2] || 'staging';
+if (!['staging', 'production'].includes(ENV)) {
+  console.error('❌ Argument invalide. Utilise: node sync.js staging | production');
+  process.exit(1);
+}
+
+// ========================================
 // 🧹 NETTOYER LES METAFIELDS
 // ========================================
 function cleanMetafieldValue(value) {
@@ -19,7 +28,6 @@ function cleanMetafieldValue(value) {
   if (typeof value === 'string' && value.trim().startsWith('{')) {
     try {
       const parsed = JSON.parse(value);
-      // Si c'est un objet Link avec une URL, retourner juste l'URL
       if (parsed.url) {
         return parsed.url;
       }
@@ -155,13 +163,6 @@ async function fetchShopifyProducts() {
       }
     };
     
-    // 🔍 DEBUG - Log des metafields
-    if (product.title.includes('bûche') || product.title.includes('Bûche')) {
-      console.log(`\n📋 DEBUG - Metafields pour "${product.title}":`);
-      console.log('   lienversClickAndCollect:', productData.metafields.lienversClickAndCollect);
-      console.log('   Raw metafields:', JSON.stringify(metafields, null, 2));
-    }
-    
     return productData;
   });
 
@@ -196,7 +197,6 @@ async function fetchWebflowItems() {
 
     const data = await response.json();
     
-    // Filtrer les items valides
     const validItems = data.items.filter(item => 
       item.fieldData && 
       item.fieldData['shopify-product-id'] &&
@@ -244,10 +244,8 @@ async function cleanDuplicates(items) {
     if (duplicates.length > 1) {
       console.log(`⚠️  Doublon: ${duplicates[0].fieldData.name} (${duplicates.length} copies)`);
       
-      // Garder le premier
       toKeep.set(shopifyId, duplicates[0].id);
       
-      // Supprimer les autres
       for (let i = 1; i < duplicates.length; i++) {
         const itemId = duplicates[i].id;
         console.log(`   🗑️  Suppression: ${itemId}`);
@@ -360,12 +358,6 @@ async function updateWebflowItem(itemId, product) {
   if (product.image) {
     webflowData.fieldData['image-principale'] = { url: product.image };
   }
-  
-  // 🔍 DEBUG - Log des données envoyées à Webflow
-  if (product.title.includes('bûche') || product.title.includes('Bûche')) {
-    console.log(`\n📤 DEBUG - Données envoyées à Webflow pour "${product.title}":`);
-    console.log('   lien-vers-click-and-collect:', webflowData.fieldData['lien-vers-click-and-collect']);
-  }
 
   const response = await fetch(
     `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/${itemId}`,
@@ -422,7 +414,14 @@ async function main() {
   try {
     console.log('═══════════════════════════════════════════════════════');
     console.log('🔄 SYNCHRONISATION SHOPIFY → WEBFLOW');
+    console.log(`🎯 Environnement: ${ENV.toUpperCase()}`);
     console.log('═══════════════════════════════════════════════════════\n');
+
+    if (ENV === 'staging') {
+      console.log('ℹ️  Mode staging — les items seront synchronisés mais NON publiés.\n');
+    } else {
+      console.log('🚀 Mode production — les items seront synchronisés ET publiés.\n');
+    }
 
     // 1. Récupérer les produits Shopify
     const products = await fetchShopifyProducts();
@@ -456,10 +455,14 @@ async function main() {
           console.log(`   ✅ Mis à jour`);
           updated++;
 
-          // Publier
-          await publishWebflowItem(existingItemId);
-          console.log(`   📢 Publié`);
-          published++;
+          // Publier uniquement en production
+          if (ENV === 'production') {
+            await publishWebflowItem(existingItemId);
+            console.log(`   📢 Publié`);
+            published++;
+          } else {
+            console.log(`   ⏸️  Staging — non publié`);
+          }
 
         } else {
           // Création
@@ -469,10 +472,14 @@ async function main() {
           console.log(`   ✅ Créé`);
           created++;
 
-          // Publier
-          await publishWebflowItem(newItemId);
-          console.log(`   📢 Publié`);
-          published++;
+          // Publier uniquement en production
+          if (ENV === 'production') {
+            await publishWebflowItem(newItemId);
+            console.log(`   📢 Publié`);
+            published++;
+          } else {
+            console.log(`   ⏸️  Staging — non publié`);
+          }
         }
 
         // Rate limiting
@@ -486,11 +493,15 @@ async function main() {
 
     // Résumé
     console.log('\n═══════════════════════════════════════════════════════');
-    console.log('📊 RÉSUMÉ DE LA SYNCHRONISATION');
+    console.log(`📊 RÉSUMÉ — ${ENV.toUpperCase()}`);
     console.log('═══════════════════════════════════════════════════════');
     console.log(`✅ Créés:      ${created}`);
     console.log(`🔄 Mis à jour: ${updated}`);
-    console.log(`📢 Publiés:    ${published}`);
+    if (ENV === 'production') {
+      console.log(`📢 Publiés:    ${published}`);
+    } else {
+      console.log(`⏸️  Non publiés (staging)`);
+    }
     console.log(`❌ Erreurs:    ${errors}`);
     console.log(`📦 Total:      ${products.length}`);
     console.log('═══════════════════════════════════════════════════════\n');
