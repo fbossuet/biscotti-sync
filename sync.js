@@ -8,6 +8,7 @@ const SHOPIFY_STORE = process.env.SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
 const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
 const WEBFLOW_COLLECTION_ID = process.env.WEBFLOW_COLLECTION_ID;
+const WEBFLOW_SITE_ID = '684eedc225e45d423c74aa02';
 
 // ========================================
 // 🎯 ENVIRONNEMENT (staging | production)
@@ -24,7 +25,6 @@ if (!['staging', 'production'].includes(ENV)) {
 function cleanMetafieldValue(value) {
   if (!value) return '';
   
-  // Gérer les objets Link Shopify (ex: {"text":"","url":"https://..."})
   if (typeof value === 'string' && value.trim().startsWith('{')) {
     try {
       const parsed = JSON.parse(value);
@@ -381,7 +381,7 @@ async function updateWebflowItem(itemId, product) {
 }
 
 // ========================================
-// 📢 PUBLIER UN ITEM
+// 📢 PUBLIER UN ITEM CMS
 // ========================================
 async function publishWebflowItem(itemId) {
   const response = await fetch(
@@ -408,6 +408,34 @@ async function publishWebflowItem(itemId) {
 }
 
 // ========================================
+// 🌐 PUBLIER LE SITE
+// ========================================
+async function publishSite() {
+  console.log('\n🌐 Publication du site en production...\n');
+
+  const response = await fetch(
+    `https://api.webflow.com/v2/sites/${WEBFLOW_SITE_ID}/publish`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({})
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Erreur publication site ${response.status}: ${JSON.stringify(error)}`);
+  }
+
+  console.log('✅ Site publié en production\n');
+  return await response.json();
+}
+
+// ========================================
 // 🚀 FONCTION PRINCIPALE
 // ========================================
 async function main() {
@@ -418,9 +446,10 @@ async function main() {
     console.log('═══════════════════════════════════════════════════════\n');
 
     if (ENV === 'staging') {
-      console.log('ℹ️  Mode staging — les items seront synchronisés mais NON publiés.\n');
+      console.log('ℹ️  Mode staging — items CMS synchronisés et publiés, site NON republié.\n');
+      console.log('   → Vérifie sur https://biscotti-2.webflow.io/ puis publie manuellement.\n');
     } else {
-      console.log('🚀 Mode production — les items seront synchronisés ET publiés.\n');
+      console.log('🚀 Mode production — items CMS synchronisés, publiés, et site republié.\n');
     }
 
     // 1. Récupérer les produits Shopify
@@ -449,37 +478,25 @@ async function main() {
         const existingItemId = webflowIndex.get(product.id);
 
         if (existingItemId) {
-          // Mise à jour
           console.log(`   🔄 Mise à jour...`);
           await updateWebflowItem(existingItemId, product);
           console.log(`   ✅ Mis à jour`);
           updated++;
 
-          // Publier uniquement en production
-          if (ENV === 'production') {
-            await publishWebflowItem(existingItemId);
-            console.log(`   📢 Publié`);
-            published++;
-          } else {
-            console.log(`   ⏸️  Staging — non publié`);
-          }
+          await publishWebflowItem(existingItemId);
+          console.log(`   📢 Item CMS publié`);
+          published++;
 
         } else {
-          // Création
           console.log(`   ➕ Création...`);
           const newItem = await createWebflowItem(product);
           const newItemId = newItem.id;
           console.log(`   ✅ Créé`);
           created++;
 
-          // Publier uniquement en production
-          if (ENV === 'production') {
-            await publishWebflowItem(newItemId);
-            console.log(`   📢 Publié`);
-            published++;
-          } else {
-            console.log(`   ⏸️  Staging — non publié`);
-          }
+          await publishWebflowItem(newItemId);
+          console.log(`   📢 Item CMS publié`);
+          published++;
         }
 
         // Rate limiting
@@ -491,16 +508,28 @@ async function main() {
       }
     }
 
+    // 5. En production uniquement : publier le site
+    if (ENV === 'production') {
+      try {
+        await publishSite();
+      } catch (error) {
+        console.error(`❌ Erreur publication du site: ${error.message}`);
+        console.log('⚠️  Les items CMS sont à jour, mais le site n\'a pas été republié.');
+        console.log('   → Publie manuellement depuis Webflow.');
+      }
+    }
+
     // Résumé
     console.log('\n═══════════════════════════════════════════════════════');
     console.log(`📊 RÉSUMÉ — ${ENV.toUpperCase()}`);
     console.log('═══════════════════════════════════════════════════════');
     console.log(`✅ Créés:      ${created}`);
     console.log(`🔄 Mis à jour: ${updated}`);
+    console.log(`📢 Items CMS:  ${published} publiés`);
     if (ENV === 'production') {
-      console.log(`📢 Publiés:    ${published}`);
+      console.log(`🌐 Site:       republié en production`);
     } else {
-      console.log(`⏸️  Non publiés (staging)`);
+      console.log(`⏸️  Site:       non republié (staging)`);
     }
     console.log(`❌ Erreurs:    ${errors}`);
     console.log(`📦 Total:      ${products.length}`);
@@ -512,5 +541,4 @@ async function main() {
   }
 }
 
-// Lancer la synchronisation
 main();
