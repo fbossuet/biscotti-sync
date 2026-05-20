@@ -578,5 +578,25 @@
     "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1709.jpg?v=1773769477",
     "tags": "Chocolat",
     "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#boites"
+  },
+  {
+    "id": "16310611509593",
+    "slug": "bonbons-a-la-menthe",
+    "nom": "bonbons à la menthe",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/Captured_ecran2026-05-04a09.02.08.png?v=1779272999",
+    "tags": "bonbons",
+    "lienCC": "https://biscotti-2.webflow.io/commander?tag=bonbons"
+  },
+  {
+    "id": "16310614819161",
+    "slug": "bonbons-a-la-fraise",
+    "nom": "bonbons à la fraise",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/AED53092-3FD7-4CCB-B62E-63F276B8C4C6_1_201_a.jpg?v=1779273045",
+    "tags": "bonbons",
+    "lienCC": "https://biscotti-2.webflow.io/commander?tag=bonbons"
   }
 ]
