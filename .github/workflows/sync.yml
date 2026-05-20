@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   repository_dispatch:
     types: [trigger-manual]
+  # schedule:
+  #   - cron: '*/15 * * * *'
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -15,13 +17,6 @@ jobs:
           node-version: '18'
       - name: Install dependencies
         run: npm install
-      - name: Check Webflow collection schema
-        env:
-          WEBFLOW_TOKEN: ${{ secrets.WEBFLOW_TOKEN }}
-        run: |
-          curl -s "https://api.webflow.com/v2/collections/69b3969b89ea42246cceef34" \
-            -H "Authorization: Bearer $WEBFLOW_TOKEN" \
-            -H "accept: application/json"
       - name: Run sync
         env:
           SHOPIFY_DOMAIN: ${{ secrets.SHOPIFY_DOMAIN }}
@@ -29,4 +24,5 @@ jobs:
           WEBFLOW_TOKEN: ${{ secrets.WEBFLOW_TOKEN }}
           WEBFLOW_COLLECTION_ID: ${{ secrets.WEBFLOW_COLLECTION_ID }}
           WEBFLOW_CATEGORIES_COLLECTION_ID: ${{ secrets.WEBFLOW_CATEGORIES_COLLECTION_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node sync.js ${{ github.event.client_payload.environment || 'staging' }}
