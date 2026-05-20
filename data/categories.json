@@ -8,25 +8,5 @@
     "lienCommander": "https://biscotti-2.webflow.io/commander?tag=bonbons",
     "affichageHome": true,
     "ordre": "0"
-  },
-  {
-    "slug": "bonbons",
-    "nom": "bonbons à la menthe",
-    "description": "",
-    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/Captured_ecran2026-05-04a09.02.08.png?v=1779272999",
-    "tagProduits": "bonbons",
-    "lienCommander": "https://biscotti-2.webflow.io/commander?tag=bonbons",
-    "affichageHome": true,
-    "ordre": "0"
-  },
-  {
-    "slug": "bonbons",
-    "nom": "bonbons à la fraise",
-    "description": "",
-    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/AED53092-3FD7-4CCB-B62E-63F276B8C4C6_1_201_a.jpg?v=1779273045",
-    "tagProduits": "bonbons",
-    "lienCommander": "https://biscotti-2.webflow.io/commander?tag=bonbons",
-    "affichageHome": false,
-    "ordre": "0"
   }
 ]
