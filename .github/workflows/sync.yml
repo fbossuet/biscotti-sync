@@ -3,11 +3,11 @@ on:
   workflow_dispatch:
   repository_dispatch:
     types: [trigger-manual]
-  # schedule:
-  #   - cron: '*/15 * * * *'
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
