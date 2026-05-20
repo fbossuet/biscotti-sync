@@ -598,5 +598,15 @@
     "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/AED53092-3FD7-4CCB-B62E-63F276B8C4C6_1_201_a.jpg?v=1779273045",
     "tags": "bonbons",
     "lienCC": "https://biscotti-2.webflow.io/commander?tag=bonbons"
+  },
+  {
+    "id": "16310713123161",
+    "slug": "test-oeufs-sportifs",
+    "nom": "test - Oeufs sportifs",
+    "description": "Pour les petits et petits sportifs(ves) retrouvez nos œufs basket, foot, tennis et rugby. Disponible au chocolat noir et au lait. (Poids : 230 Grs minimum avec friture) Tous nos sujets sont garnis de friture (lait, noir et blanc) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "24.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1694.jpg?v=1773697121",
+    "tags": "bonbons, Chocolat",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#sportifs"
   }
 ]
