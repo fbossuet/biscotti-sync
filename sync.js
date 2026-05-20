@@ -49,7 +49,7 @@ async function pushStateToGitHub(state) {
 
   // Lire le SHA actuel du fichier (nécessaire pour le PUT)
   const getRes = await fetch(
-    `https://api.github.com/repos/${GITHUB_REPO}/contents/${STATE_FILE}`,
+    `https://api.github.com/repos/${GITHUB_REPO}/contents/sync-state.json`,
     { headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'accept': 'application/vnd.github.v3+json' } }
   );
 
@@ -67,7 +67,7 @@ async function pushStateToGitHub(state) {
   };
 
   const putRes = await fetch(
-    `https://api.github.com/repos/${GITHUB_REPO}/contents/${STATE_FILE}`,
+    `https://api.github.com/repos/${GITHUB_REPO}/contents/sync-state.json`,
     {
       method: 'PUT',
       headers: {
