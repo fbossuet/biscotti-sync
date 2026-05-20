@@ -14,7 +14,7 @@ const WEBFLOW_CATEGORIES_COLLECTION_ID = process.env.WEBFLOW_CATEGORIES_COLLECTI
 const GITHUB_TOKEN   = process.env.GITHUB_TOKEN;
 const GITHUB_REPO    = 'fbossuet/biscotti-sync';
 const WEBFLOW_SITE_ID = '684eedc225e45d423c74aa02';
-const STATE_FILE     = 'sync-state.json';
+const STATE_FILE     = path.join(process.cwd(), 'sync-state.json');
 
 // ========================================
 // 🎯 ENVIRONNEMENT (staging | production)
