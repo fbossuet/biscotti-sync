@@ -336,8 +336,8 @@ function buildCategoryFieldData(product) {
       'slug':                        product.handle,
       'description-de-la-categorie': cleanHtml(product.description),
       'shopify-product-id':          product.id,
-      'tag-produits':                product.tagProduits,
-      'lien-commander':              product.metafields.lienversClickAndCollect,
+      'tag-produits-2':                product.tagProduits,
+      'lien-commander-2':              product.metafields.lienversClickAndCollect,
       'affichage-sur-page-d-accueil': product.metafields.produitDuMoment === 'true',
       'ordre-d-affichage':           ordre
     }
