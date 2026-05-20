@@ -399,7 +399,7 @@ async function generateStaticData(produits, categories) {
 
   // categories.json
   const categoriesJson = JSON.stringify(categories.map(c => ({
-    slug:          c.handle,
+    slug:          c.tagProduits || c.handle,
     nom:           c.title,
     description:   c.description,
     image:         c.image,
