@@ -1,0 +1,582 @@
+[
+  {
+    "id": "15887646982489",
+    "slug": "tartes",
+    "nom": "Tartes glacées",
+    "description": "Bientôt disponible chez Biscotti, des tartes glacées aux sorbets maison...",
+    "prix": "20.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/biscuits_-_chocolats-_glaces_2.png?v=1764503503",
+    "tags": "patisseries",
+    "lienCC": ""
+  },
+  {
+    "id": "15887861219673",
+    "slug": "macarons-aperitif",
+    "nom": "Macarons apéritif",
+    "description": "Pour les fêtes de fin d'année retrouvez notre collection de macarons salés : foie gras, saumon, truffes de Néoules. Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "7.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1215.jpg?v=1763306202",
+    "tags": "",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/macarons-aperitif-commander"
+  },
+  {
+    "id": "15887879307609",
+    "slug": "cake",
+    "nom": "Cake",
+    "description": "L'incontournable cake aux fruits confits, citron ou tout chocolat toujours,100% pur beurre (environ 500 Gr)",
+    "prix": "10.50",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0767.jpg?v=1762267697",
+    "tags": "patisseries",
+    "lienCC": ""
+  },
+  {
+    "id": "15887887008089",
+    "slug": "mille-feuilles",
+    "nom": "Mille-feuilles",
+    "description": "Pour les fêtes de Pâques ou tout simplement pour un joli dessert, retrouvez notre mille-feuilles vanille ou chocolat, personnalisable.",
+    "prix": "5.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/WhatsApp_Image_2025-11-03_at_21.08.56.jpg?v=1762267888",
+    "tags": "patisseries",
+    "lienCC": ""
+  },
+  {
+    "id": "15887891792217",
+    "slug": "cookie-a-partager",
+    "nom": "Cookie à partager",
+    "description": "Pour les plus gourmand notre cookie caramel ou framboise pistache.",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1375.jpg?v=1761649731",
+    "tags": "patisseries",
+    "lienCC": ""
+  },
+  {
+    "id": "15887896674649",
+    "slug": "panetonne",
+    "nom": "Panetonne",
+    "description": "Noël, c'est aussi avec un véritable Panettone italien. Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "20.50",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/WhatsApp_Image_2025-11-02_at_17.21.38.jpg?v=1764772467",
+    "tags": "",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/panettone-commander"
+  },
+  {
+    "id": "15887900442969",
+    "slug": "gateau-des-rois",
+    "nom": "Gâteau des rois",
+    "description": "Plutôt brioche ou frangipane? Venez choisir entre la frangipane aux amandes amères ou la véritable brioche des rois avec ses fruits confits et ses pignons.",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/gdr.jpg?v=1763721210",
+    "tags": "patisseries",
+    "lienCC": ""
+  },
+  {
+    "id": "15887906275673",
+    "slug": "nos-buches",
+    "nom": "Bûches au biscuit roulé",
+    "description": "La véritable bûche roulée à la crème au beurre qui vous replonge dans le Noël d'antan, praliné, chocolat, marron et framboise pistache. Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "24.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1366.jpg?v=1764759617",
+    "tags": "",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/nos-buches-commander"
+  },
+  {
+    "id": "15890639520089",
+    "slug": "sables-pepites",
+    "nom": "Sablés pépites",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0101_2.jpg?v=1761224608",
+    "tags": "biscuits sucrés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890715803993",
+    "slug": "langues-de-chat",
+    "nom": "Langues de chat",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0116_2.jpg?v=1761228001",
+    "tags": "biscuits sucrés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890730516825",
+    "slug": "meringues",
+    "nom": "Meringues",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0067_2.jpg?v=1761228177",
+    "tags": "biscuits sucrés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890745327961",
+    "slug": "sables-vanille",
+    "nom": "Sablés vanille",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0097_2.jpg?v=1761228297",
+    "tags": "biscuits sucrés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890757386585",
+    "slug": "navettes",
+    "nom": "Navettes",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0108_2.jpg?v=1761228434",
+    "tags": "biscuits sucrés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890772951385",
+    "slug": "emmental",
+    "nom": "Emmental",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0133_2.jpg?v=1761228540",
+    "tags": "biscuits salés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890792644953",
+    "slug": "provencal",
+    "nom": "Provencal",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_01302.jpg?v=1761228659",
+    "tags": "biscuits salés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890839175513",
+    "slug": "olives",
+    "nom": "Olives",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0127_1.jpg?v=1764533158",
+    "tags": "biscuits salés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890844942681",
+    "slug": "oignons",
+    "nom": "Oignons",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_00442.jpg?v=1761229279",
+    "tags": "biscuits salés",
+    "lienCC": ""
+  },
+  {
+    "id": "15890868502873",
+    "slug": "macarons",
+    "nom": "Macarons",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0511.jpg?v=1764776209",
+    "tags": "petits fours",
+    "lienCC": ""
+  },
+  {
+    "id": "15890873352537",
+    "slug": "rochers",
+    "nom": "Croissants Pignons",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/3F8F9B48-13AF-4495-8883-852A727F58EC.jpg?v=1764776126",
+    "tags": "petits fours",
+    "lienCC": ""
+  },
+  {
+    "id": "15890895831385",
+    "slug": "canneles",
+    "nom": "Cannelés",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0055.jpg?v=1761229631",
+    "tags": "petits fours",
+    "lienCC": ""
+  },
+  {
+    "id": "15890970313049",
+    "slug": "chocolats-fins",
+    "nom": "Chocolats fins",
+    "description": "Pour les fêtes de fin d'année retrouvez notre gamme de chocolats fins : praliné feuilleté, ganache café, ganache chocolat noir, praliné noisette... Le délais de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "16.80",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1178.jpg?v=1764766005",
+    "tags": "",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-fins-commander"
+  },
+  {
+    "id": "15890986107225",
+    "slug": "rochers-1",
+    "nom": "Rochers",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0052-Grande_3cc482f0-8af9-43fe-8edb-01e55b83950d.jpg?v=1761230606",
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15890999017817",
+    "slug": "tablettes",
+    "nom": "Tablettes",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1067.jpg?v=1763490661",
+    "tags": "Chocolat",
+    "lienCC": ""
+  },
+  {
+    "id": "15891565117785",
+    "slug": "madeleines-et-financiers",
+    "nom": "Madeleines et financiers",
+    "description": "Madeleine et financier: une véritable madeleine 100% pur beurre ou un financier aux amandes (vendus en sachets de 4)",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1318.jpg?v=1764758760",
+    "tags": "patisseries",
+    "lienCC": ""
+  },
+  {
+    "id": "15891585925465",
+    "slug": "palmiers",
+    "nom": "Tuiles aux amandes",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1077.jpg?v=1762282220",
+    "tags": "biscuits sucrés",
+    "lienCC": ""
+  },
+  {
+    "id": "15891586646361",
+    "slug": "croquants-amande-et-noisette",
+    "nom": "Croquants amandes et noisettes",
+    "description": "description à mettre à jour",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1069.jpg?v=1762279983",
+    "tags": "biscuits sucrés",
+    "lienCC": ""
+  },
+  {
+    "id": "15891588088153",
+    "slug": "sables-chocolat",
+    "nom": "Sablés chocolat",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/WhatsApp_Image_2025-11-03_at_21.02.54.jpg?v=1762249427",
+    "tags": "biscuits sucrés",
+    "lienCC": ""
+  },
+  {
+    "id": "15902340809049",
+    "slug": "et-bien-plus-encore",
+    "nom": ".",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/biscuits_-_chocolats-_glaces_1.png?v=1762289568",
+    "tags": "biscuits sucrés, patisseries",
+    "lienCC": ""
+  },
+  {
+    "id": "15902396711257",
+    "slug": "chanteclair",
+    "nom": "Chanteclair",
+    "description": "Retrouvez le fameux Chanteclair Toulonnais, au café ou au praliné.",
+    "prix": "29.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0151.jpg?v=1773312861",
+    "tags": "gateaux glacés",
+    "lienCC": ""
+  },
+  {
+    "id": "15902403428697",
+    "slug": "praline-et-nougatine",
+    "nom": "Praline et nougatine",
+    "description": "",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0239.jpg?v=1762354830",
+    "tags": "chocolat",
+    "lienCC": ""
+  },
+  {
+    "id": "15902410506585",
+    "slug": "calendriers-de-lavent",
+    "nom": "Calendriers de l'avent",
+    "description": "Retrouvez nos calendriers de l'Avent garnis avec nos chocolats maisons, pour les petits et les grands.",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1169.jpg?v=1763313857",
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915231150425",
+    "slug": "buches-au-biscuit-glacees",
+    "nom": "Bûche signature",
+    "description": "Bûche signature : Chaque année nous vous proposons une bûche signature, cette année c'est un biscuits madeleine et croustillant praliné, coeur praliné, mousse noisette et mousse chocolat origine Vietnam. Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "38.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1353.jpg?v=1764760383",
+    "tags": "",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/nos-buches-commander"
+  },
+  {
+    "id": "15915232297305",
+    "slug": "buche-signature",
+    "nom": "Bûches glacées",
+    "description": "Bûche glacée, pour une fin de repas tout en légèreté avec sa chantilly maison (nougat/figue, vanille/caramel beurre salé, framboise/yuzu, Marron/vanille insert mûre) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "32.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1429.jpg?v=1764760096",
+    "tags": "",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/nos-buches-commander"
+  },
+  {
+    "id": "15915279843673",
+    "slug": "nos-buches-1",
+    "nom": "Nos bûches",
+    "description": "Retrouvez nos bûches de Noël, glacées, roulées au beurre ou signature, chez Biscotti il y en a pour tous les goûts. Venez découvrir nos créations dans notre boutique.",
+    "prix": "24.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1366.jpg?v=1764759617",
+    "tags": "",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/nos-buches-commander"
+  },
+  {
+    "id": "15915317952857",
+    "slug": "assortiments-de-biscuits",
+    "nom": "Assortiments de biscuits",
+    "description": "Navettes, croquants noisette, sablés, langues de chats, meringues et bien d'autres. Retrouvez une quarantaine de sortes de biscuits avec des classiques du biscuit de Provence, et régulièrement des nouveautés au grès de nos idées toujours plus gourmandes. Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "10.25",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/image00011_1105bb6a-dd48-4428-b100-be5cf6118860.jpg?v=1764532170",
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915336270169",
+    "slug": "pralines",
+    "nom": "Pralines",
+    "description": "Sachet de pralines aux amandes. (150 Gr).",
+    "prix": "4.80",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0239.jpg?v=1762354830",
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915336794457",
+    "slug": "nougatine",
+    "nom": "Nougatine",
+    "description": "Sachet de nougatine maison (180 Gr).",
+    "prix": "7.00",
+    "image": null,
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915339448665",
+    "slug": "biscuits-sales",
+    "nom": "Biscuits salés",
+    "description": "Les biscuits c'est aussi salé, retrouvez notre gamme de crackers salés, oignons, anchois, parmesan, roquefort, emmental, curry ou paprika disponible en sachet de 150 Gr. Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "4.80",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0127_1.jpg?v=1764533158",
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915343511897",
+    "slug": "tablette-mendiant",
+    "nom": "Tablette mendiant",
+    "description": "Tablette chocolat mendiant (Mini 100 Gr). Disponible au chocolat noir, lait et blanc.",
+    "prix": "6.20",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0507.jpg?v=1764790702",
+    "tags": "chocolat",
+    "lienCC": ""
+  },
+  {
+    "id": "15915345510745",
+    "slug": "tablette-chocolat-vietnam",
+    "nom": "Tablette chocolat Vietnam",
+    "description": "Tablette chocolat sélection Vietnam, disponible au chocolat noir ou au lait.",
+    "prix": "6.20",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1067_d28529ab-d37b-4c84-b042-af4193697e7f.jpg?v=1762356785",
+    "tags": "chocolat",
+    "lienCC": ""
+  },
+  {
+    "id": "15915347476825",
+    "slug": "rocher-praline",
+    "nom": "Rocher praliné",
+    "description": "Découvrez nos rochers, une ganache praliné enrobé de chocolat noir ou au lait.",
+    "prix": "4.80",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0052.jpg?v=1762356997",
+    "tags": "chocolat",
+    "lienCC": ""
+  },
+  {
+    "id": "15915349377369",
+    "slug": "rocher-coco",
+    "nom": "Rocher coco",
+    "description": "Découvrez notre rocher coco enrobé de chocolat noir ou au lait.",
+    "prix": "4.80",
+    "image": null,
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915358749017",
+    "slug": "barre-feuilletee",
+    "nom": "Barre feuilletée",
+    "description": "Découvrez nos barres feuilletées délicieusement craquantes au chocolat noir ou au lait.",
+    "prix": "4.80",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0973.jpg?v=1762357751",
+    "tags": "chocolat",
+    "lienCC": ""
+  },
+  {
+    "id": "15915362419033",
+    "slug": "tablette-dubai",
+    "nom": "Tablette Dubaï",
+    "description": "Découvrez notre tablette Dubaï, pour les fans de pistaches au chocolat noir ou au lait.",
+    "prix": "10.20",
+    "image": null,
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915371495769",
+    "slug": "vacherins",
+    "nom": "Vacherins",
+    "description": "Découvrez notre vacherin, un dessert glacé avec une chantilly maison.",
+    "prix": "28.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/FullSizeRender_VSCO_22.jpg?v=1762358435",
+    "tags": "gateaux glacés",
+    "lienCC": ""
+  },
+  {
+    "id": "15915373887833",
+    "slug": "cookies-a-partager",
+    "nom": "Cookies à partager",
+    "description": "Découvrez nos cookies à partager, chocolat - caramel ou framboise - pistache (6 pers).",
+    "prix": "22.50",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0373.jpg?v=1762358796",
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915380375897",
+    "slug": "pot-de-glace",
+    "nom": "Pot de glace",
+    "description": "Découvrez nos glaces maison en pot de 200 Gr. Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "4.20",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0565.jpg?v=1762359732",
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915392696665",
+    "slug": "bac-de-glace",
+    "nom": "Bac de glace",
+    "description": "Découvrez nos glaces maison en bac de 500 Gr. Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "11.50",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0075.jpg?v=1762359732",
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "15915573608793",
+    "slug": "omellet-norvegienne",
+    "nom": "Omelette Norvégienne",
+    "description": "Découvrez notre omelette Norvégienne maison avec sa glace vanille maison et sa chantilly flambée.",
+    "prix": "0.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_0178_1_-_Grande_093400ff-564d-4ac0-8aad-10850ed33474.jpg?v=1762364503",
+    "tags": "gateaux glacés",
+    "lienCC": ""
+  },
+  {
+    "id": "15978209935705",
+    "slug": "produit-de-test-de-francois",
+    "nom": "produit de test de françois",
+    "description": "",
+    "prix": "0.00",
+    "image": null,
+    "tags": "",
+    "lienCC": ""
+  },
+  {
+    "id": "16182851436889",
+    "slug": "chocolats-de-paques",
+    "nom": "Chocolats de Pâques",
+    "description": "Retrouvez nos sujets de Pâques, chocolat noir, au lait ou blanc, chez Biscotti il y en a pour tous les goûts.",
+    "prix": "21.50",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1630.jpg?v=1773855115",
+    "tags": "",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander"
+  },
+  {
+    "id": "16190247993689",
+    "slug": "lapin-astronaute",
+    "nom": "Lapin astronaute",
+    "description": "Un lapin astronaute pour les amoureux(se) des étoiles. Disponible au chocolat noir ou au lait. (Poids 150 Grs minimum avec friture) Tous nos sujets sont garnis de friture (lait, noir et blanc) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "21.50",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1642.jpg?v=1773855115",
+    "tags": "Chocolat",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#astronaute"
+  },
+  {
+    "id": "16190251073881",
+    "slug": "boites-de-sardines",
+    "nom": "Boîtes de sardines",
+    "description": "La boîte de sardines garnie de poisson pour fêter le 1er Avril. Tous nos sujets sont garnis de friture (lait, noir, blanc et caramel) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "16.50",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1675.jpg?v=1773695893",
+    "tags": "Chocolat",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#sardines"
+  },
+  {
+    "id": "16190287774041",
+    "slug": "oeufs-sportifs",
+    "nom": "Oeufs sportifs",
+    "description": "Pour les petits et petits sportifs(ves) retrouvez nos œufs basket, foot, tennis et rugby. Disponible au chocolat noir et au lait. (Poids : 230 Grs minimum avec friture) Tous nos sujets sont garnis de friture (lait, noir et blanc) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "24.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1694.jpg?v=1773697121",
+    "tags": "Chocolat",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#sportifs"
+  },
+  {
+    "id": "16191219269977",
+    "slug": "renard",
+    "nom": "Renard",
+    "description": "Un joli renard pour les amoureux des animaux. Disponible au chocolat noir, au lait ou blanc. (Poids : 150 Grs minimum avec friture) Tous nos sujets sont garnis de friture (lait, noir et blanc) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "19.50",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1621.jpg?v=1773759972",
+    "tags": "Chocolat",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#renard"
+  },
+  {
+    "id": "16191241814361",
+    "slug": "aviateur",
+    "nom": "Aviateur",
+    "description": "Un lapin aviateur avec son avion en chocolat. Disponible au chocolat noir et au lait. (Poids : 320 Grs minimum avec friture) Tous nos sujets sont garnis de friture (lait, noir et blanc) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "31.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1613_52f2636d-4af6-43ff-afa0-6844bd1e3672.jpg?v=1773760527",
+    "tags": "Chocolat",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#aviateur"
+  },
+  {
+    "id": "16191305711961",
+    "slug": "voiture-de-course",
+    "nom": "Voiture de course",
+    "description": "Pour les futurs pilotes, un bolide et son petit lapin. Disponible au chocolat noir et au lait. (Poids : 400 Grs minimum avec friture) Tous nos sujets sont garnis de friture (lait, noir et blanc) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "31.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1659_7b0b54ec-88c5-4275-a446-fdaa35049aed.jpg?v=1773760973",
+    "tags": "Chocolat",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#voiture"
+  },
+  {
+    "id": "16191516180825",
+    "slug": "boite-doeufs",
+    "nom": "Boîtes d'oeufs",
+    "description": "Une véritable boîte de 6 oeufs en chocolat Dans chaque boîte 2 oeufs chocolat noir, 2 chocolat lait, 1 chocolat blanc et et 1 chocolat caramel. (Poids : 215 Grs minimum avec friture) Tous nos sujets sont garnis de friture (lait, noir et blanc) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
+    "prix": "24.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1709.jpg?v=1773769477",
+    "tags": "Chocolat",
+    "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#boites"
+  }
+]
