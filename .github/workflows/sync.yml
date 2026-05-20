@@ -1,12 +1,10 @@
 name: Sync Shopify to Webflow
-
 on:
   workflow_dispatch:
   repository_dispatch:
     types: [trigger-manual]
   # schedule:
   #   - cron: '*/15 * * * *'
-
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -25,4 +23,5 @@ jobs:
           SHOPIFY_TOKEN: ${{ secrets.SHOPIFY_TOKEN }}
           WEBFLOW_TOKEN: ${{ secrets.WEBFLOW_TOKEN }}
           WEBFLOW_COLLECTION_ID: ${{ secrets.WEBFLOW_COLLECTION_ID }}
+          WEBFLOW_CATEGORIES_COLLECTION_ID: ${{ secrets.WEBFLOW_CATEGORIES_COLLECTION_ID }}
         run: node sync.js ${{ github.event.client_payload.environment || 'staging' }}
