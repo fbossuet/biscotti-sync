@@ -25,3 +25,7 @@ jobs:
           WEBFLOW_COLLECTION_ID: ${{ secrets.WEBFLOW_COLLECTION_ID }}
           WEBFLOW_CATEGORIES_COLLECTION_ID: ${{ secrets.WEBFLOW_CATEGORIES_COLLECTION_ID }}
         run: node sync.js ${{ github.event.client_payload.environment || 'staging' }}
+
+curl -s "https://api.webflow.com/v2/collections/69b3969b89ea42246cceef34" \
+  -H "Authorization: Bearer $WEBFLOW_TOKEN" \
+  -H "accept: application/json" | grep -E '"slug"|"displayName"'
