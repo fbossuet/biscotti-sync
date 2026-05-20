@@ -4,10 +4,11 @@ import fetch from 'node-fetch';
 // ========================================
 // 🔐 CONFIGURATION
 // ========================================
-const SHOPIFY_STORE = process.env.SHOPIFY_DOMAIN;
-const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
-const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
-const WEBFLOW_COLLECTION_ID = process.env.WEBFLOW_COLLECTION_ID;
+const SHOPIFY_STORE  = process.env.SHOPIFY_DOMAIN;
+const SHOPIFY_TOKEN  = process.env.SHOPIFY_TOKEN;
+const WEBFLOW_TOKEN  = process.env.WEBFLOW_TOKEN;
+const WEBFLOW_COLLECTION_ID            = process.env.WEBFLOW_COLLECTION_ID;
+const WEBFLOW_CATEGORIES_COLLECTION_ID = process.env.WEBFLOW_CATEGORIES_COLLECTION_ID;
 const WEBFLOW_SITE_ID = '684eedc225e45d423c74aa02';
 
 // ========================================
@@ -24,33 +25,27 @@ if (!['staging', 'production'].includes(ENV)) {
 // ========================================
 function cleanMetafieldValue(value) {
   if (!value) return '';
-  
+
   if (typeof value === 'string' && value.trim().startsWith('{')) {
     try {
       const parsed = JSON.parse(value);
-      if (parsed.url) {
-        return parsed.url;
-      }
+      if (parsed.url) return parsed.url;
     } catch (e) {}
   }
-  
+
   if (typeof value === 'string' && value.trim().startsWith('[')) {
     try {
       const parsed = JSON.parse(value);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed[0].toString();
-      }
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed[0].toString();
     } catch (e) {}
   }
-  
-  if (typeof value === 'string') {
-    return value.replace(/^["']|["']$/g, '');
-  }
-  
+
+  if (typeof value === 'string') return value.replace(/^["']|["']$/g, '');
+
   if (value && typeof value === 'object' && 'value' in value) {
     return cleanMetafieldValue(value.value);
   }
-  
+
   return '';
 }
 
@@ -59,7 +54,6 @@ function cleanMetafieldValue(value) {
 // ========================================
 function cleanHtml(html) {
   if (!html) return '';
-  
   return html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n\n')
@@ -77,7 +71,7 @@ function cleanHtml(html) {
 // ========================================
 async function fetchShopifyProducts() {
   console.log('🛒 Récupération des produits Shopify...\n');
-  
+
   const query = `
     query {
       products(first: 250) {
@@ -87,24 +81,14 @@ async function fetchShopifyProducts() {
             title
             handle
             description
-            featuredImage {
-              url
-            }
+            featuredImage { url }
             tags
             variants(first: 1) {
-              edges {
-                node {
-                  price
-                }
-              }
+              edges { node { price } }
             }
             metafields(first: 20) {
               edges {
-                node {
-                  namespace
-                  key
-                  value
-                }
+                node { namespace key value }
               }
             }
           }
@@ -131,58 +115,64 @@ async function fetchShopifyProducts() {
   }
 
   const data = await response.json();
-
-  if (data.errors) {
-    throw new Error(`Erreur GraphQL: ${JSON.stringify(data.errors)}`);
-  }
+  if (data.errors) throw new Error(`Erreur GraphQL: ${JSON.stringify(data.errors)}`);
 
   const products = data.data.products.edges.map(edge => {
     const product = edge.node;
-    
+
     const metafields = {};
     product.metafields.edges.forEach(({ node }) => {
-      const key = node.key.replace(/-/g, '_');
-      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      const key       = node.key.replace(/-/g, '_');
+      const camelKey  = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
       metafields[camelKey] = cleanMetafieldValue(node.value);
     });
 
-    const productData = {
-      id: product.id.replace('gid://shopify/Product/', ''),
-      title: product.title,
-      handle: product.handle,
+    // Tag "categorie" = produit-catégorie
+    // Les autres tags = tag des produits rattachés à cette catégorie
+    const tagsArray  = product.tags || [];
+    const isCategorie = tagsArray.includes('categorie');
+    const tagProduits = tagsArray.filter(t => t !== 'categorie').join(', ');
+
+    return {
+      id:          product.id.replace('gid://shopify/Product/', ''),
+      title:       product.title,
+      handle:      product.handle,
       description: product.description || '',
-      price: product.variants.edges[0]?.node.price || '0',
-      image: product.featuredImage?.url || null,
-      tags: product.tags ? product.tags.join(', ') : '',
+      price:       product.variants.edges[0]?.node.price || '0',
+      image:       product.featuredImage?.url || null,
+      tags:        tagsArray.join(', '),
+      tagProduits,
+      isCategorie,
       metafields: {
-        produitDuMoment: metafields.produitDuMoment || 'false',
-        encartVert: metafields.encartVert || '',
-        dateDisponibilite: metafields.dateDisponibilite || '',
-        lienversClickAndCollect: metafields.lienversClickAndCollect || '',
-        ordreDAffichage: metafields.ordreDAffichage || ''
+        produitDuMoment:          metafields.produitDuMoment          || 'false',
+        encartVert:               metafields.encartVert               || '',
+        dateDisponibilite:        metafields.dateDisponibilite        || '',
+        lienversClickAndCollect:  metafields.lienversClickAndCollect  || '',
+        ordreDAffichage:          metafields.ordreDAffichage          || ''
       }
     };
-    
-    return productData;
   });
 
-  console.log(`✅ ${products.length} produits récupérés\n`);
-  return products;
+  const categories = products.filter(p => p.isCategorie);
+  const produits   = products.filter(p => !p.isCategorie);
+
+  console.log(`✅ ${products.length} produits récupérés (${produits.length} produits + ${categories.length} catégories)\n`);
+  return { produits, categories };
 }
 
 // ========================================
-// 📋 RÉCUPÉRER TOUS LES ITEMS WEBFLOW
+// 📋 RÉCUPÉRER LES ITEMS D'UNE COLLECTION
 // ========================================
-async function fetchWebflowItems() {
-  console.log('📋 Récupération des items Webflow existants...\n');
-  
-  const items = [];
-  let offset = 0;
-  const limit = 100;
+async function fetchWebflowItems(collectionId) {
+  console.log(`📋 Récupération des items Webflow (collection: ${collectionId})...\n`);
+
+  const items  = [];
+  let offset   = 0;
+  const limit  = 100;
 
   while (true) {
-    const url = `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items?limit=${limit}&offset=${offset}`;
-    
+    const url = `https://api.webflow.com/v2/collections/${collectionId}/items?limit=${limit}&offset=${offset}`;
+
     const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
@@ -196,21 +186,17 @@ async function fetchWebflowItems() {
     }
 
     const data = await response.json();
-    
-    const validItems = data.items.filter(item => 
-      item.fieldData && 
+
+    const validItems = data.items.filter(item =>
+      item.fieldData &&
       item.fieldData['shopify-product-id'] &&
       item.id
     );
 
     items.push(...validItems);
-
     console.log(`   📦 ${items.length} items chargés...`);
 
-    if (!data.items || data.items.length < limit) {
-      break;
-    }
-
+    if (!data.items || data.items.length < limit) break;
     offset += limit;
     await new Promise(resolve => setTimeout(resolve, 200));
   }
@@ -222,37 +208,30 @@ async function fetchWebflowItems() {
 // ========================================
 // 🧹 NETTOYER LES DOUBLONS
 // ========================================
-async function cleanDuplicates(items) {
+async function cleanDuplicates(items, collectionId) {
   console.log('🧹 Vérification des doublons...\n');
 
   const grouped = new Map();
-  
   items.forEach(item => {
     const shopifyId = item.fieldData['shopify-product-id'];
     if (!shopifyId) return;
-    
-    if (!grouped.has(shopifyId)) {
-      grouped.set(shopifyId, []);
-    }
+    if (!grouped.has(shopifyId)) grouped.set(shopifyId, []);
     grouped.get(shopifyId).push(item);
   });
 
   let deleted = 0;
   const toKeep = new Map();
-  
+
   for (const [shopifyId, duplicates] of grouped) {
     if (duplicates.length > 1) {
       console.log(`⚠️  Doublon: ${duplicates[0].fieldData.name} (${duplicates.length} copies)`);
-      
       toKeep.set(shopifyId, duplicates[0].id);
-      
       for (let i = 1; i < duplicates.length; i++) {
         const itemId = duplicates[i].id;
         console.log(`   🗑️  Suppression: ${itemId}`);
-        
         try {
           await fetch(
-            `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/${itemId}`,
+            `https://api.webflow.com/v2/collections/${collectionId}/items/${itemId}`,
             {
               method: 'DELETE',
               headers: {
@@ -261,7 +240,6 @@ async function cleanDuplicates(items) {
               }
             }
           );
-          
           deleted++;
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
@@ -273,41 +251,37 @@ async function cleanDuplicates(items) {
     }
   }
 
-  if (deleted > 0) {
-    console.log(`\n✅ ${deleted} doublons supprimés\n`);
-  } else {
-    console.log(`✅ Aucun doublon\n`);
-  }
+  if (deleted > 0) console.log(`\n✅ ${deleted} doublons supprimés\n`);
+  else             console.log(`✅ Aucun doublon\n`);
 
   return toKeep;
 }
 
 // ========================================
-// ➕ CRÉER UN ITEM WEBFLOW
+// ➕ CRÉER / METTRE À JOUR — PRODUIT
 // ========================================
-async function createWebflowItem(product) {
-  const webflowData = {
+function buildProductFieldData(product) {
+  const data = {
     fieldData: {
-      'name': product.title,
-      'slug': product.handle,
-      'description': cleanHtml(product.description),
-      'prix': product.price,
-      'shopify-product-id': product.id,
-      'shopify-handle': product.handle,
-      'balise': product.tags,
-      
-      'produit-du-moment': product.metafields.produitDuMoment === 'true',
-      'encart-vert': product.metafields.encartVert,
-      'date-disponibilite': product.metafields.dateDisponibilite,
+      'name':                       product.title,
+      'slug':                       product.handle,
+      'description':                cleanHtml(product.description),
+      'prix':                       product.price,
+      'shopify-product-id':         product.id,
+      'shopify-handle':             product.handle,
+      'balise':                     product.tags,
+      'produit-du-moment':          product.metafields.produitDuMoment === 'true',
+      'encart-vert':                product.metafields.encartVert,
+      'date-disponibilite':         product.metafields.dateDisponibilite,
       'lien-vers-click-and-collect': product.metafields.lienversClickAndCollect,
-      'ordre-d-affichage-5': product.metafields.ordreDAffichage
+      'ordre-d-affichage-5':        product.metafields.ordreDAffichage
     }
   };
+  if (product.image) data.fieldData['image-principale'] = { url: product.image };
+  return data;
+}
 
-  if (product.image) {
-    webflowData.fieldData['image-principale'] = { url: product.image };
-  }
-
+async function createWebflowItem(product) {
   const response = await fetch(
     `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items`,
     {
@@ -317,48 +291,18 @@ async function createWebflowItem(product) {
         'Content-Type': 'application/json',
         'accept': 'application/json'
       },
-      body: JSON.stringify(webflowData)
+      body: JSON.stringify(buildProductFieldData(product))
     }
   );
-
   if (!response.ok) {
     const error = await response.json();
     throw new Error(`Erreur ${response.status}: ${JSON.stringify(error)}`);
   }
-
   return await response.json();
 }
 
-// ========================================
-// 🔄 METTRE À JOUR UN ITEM WEBFLOW
-// ========================================
 async function updateWebflowItem(itemId, product) {
-  if (!itemId || itemId === 'undefined') {
-    throw new Error('ID Webflow invalide');
-  }
-
-  const webflowData = {
-    fieldData: {
-      'name': product.title,
-      'slug': product.handle,
-      'description': cleanHtml(product.description),
-      'prix': product.price,
-      'shopify-product-id': product.id,
-      'shopify-handle': product.handle,
-      'balise': product.tags,
-      
-      'produit-du-moment': product.metafields.produitDuMoment === 'true',
-      'encart-vert': product.metafields.encartVert,
-      'date-disponibilite': product.metafields.dateDisponibilite,
-      'lien-vers-click-and-collect': product.metafields.lienversClickAndCollect,
-      'ordre-d-affichage-5': product.metafields.ordreDAffichage
-    }
-  };
-
-  if (product.image) {
-    webflowData.fieldData['image-principale'] = { url: product.image };
-  }
-
+  if (!itemId || itemId === 'undefined') throw new Error('ID Webflow invalide');
   const response = await fetch(
     `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/${itemId}`,
     {
@@ -368,24 +312,43 @@ async function updateWebflowItem(itemId, product) {
         'Content-Type': 'application/json',
         'accept': 'application/json'
       },
-      body: JSON.stringify(webflowData)
+      body: JSON.stringify(buildProductFieldData(product))
     }
   );
-
   if (!response.ok) {
     const error = await response.json();
     throw new Error(`Erreur ${response.status}: ${JSON.stringify(error)}`);
   }
-
   return await response.json();
 }
 
 // ========================================
-// 📢 PUBLIER UN ITEM CMS
+// ➕ CRÉER / METTRE À JOUR — CATÉGORIE
 // ========================================
-async function publishWebflowItem(itemId) {
+function buildCategoryFieldData(product) {
+  const ordre = product.metafields.ordreDAffichage
+    ? parseInt(product.metafields.ordreDAffichage, 10) || null
+    : null;
+
+  const data = {
+    fieldData: {
+      'name':                        product.title,
+      'slug':                        product.handle,
+      'description-de-la-categorie': cleanHtml(product.description),
+      'shopify-product-id':          product.id,
+      'tag-produits':                product.tagProduits,
+      'lien-commander':              product.metafields.lienversClickAndCollect,
+      'affichage-sur-page-d-accueil': product.metafields.produitDuMoment === 'true',
+      'ordre-d-affichage':           ordre
+    }
+  };
+  if (product.image) data.fieldData['image-de-la-categorie'] = { url: product.image };
+  return data;
+}
+
+async function createWebflowCategory(product) {
   const response = await fetch(
-    `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/publish`,
+    `https://api.webflow.com/v2/collections/${WEBFLOW_CATEGORIES_COLLECTION_ID}/items`,
     {
       method: 'POST',
       headers: {
@@ -393,17 +356,57 @@ async function publishWebflowItem(itemId) {
         'Content-Type': 'application/json',
         'accept': 'application/json'
       },
-      body: JSON.stringify({
-        itemIds: [itemId]
-      })
+      body: JSON.stringify(buildCategoryFieldData(product))
     }
   );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Erreur ${response.status}: ${JSON.stringify(error)}`);
+  }
+  return await response.json();
+}
 
+async function updateWebflowCategory(itemId, product) {
+  if (!itemId || itemId === 'undefined') throw new Error('ID Webflow invalide');
+  const response = await fetch(
+    `https://api.webflow.com/v2/collections/${WEBFLOW_CATEGORIES_COLLECTION_ID}/items/${itemId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify(buildCategoryFieldData(product))
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Erreur ${response.status}: ${JSON.stringify(error)}`);
+  }
+  return await response.json();
+}
+
+// ========================================
+// 📢 PUBLIER UN ITEM CMS
+// ========================================
+async function publishWebflowItem(itemId, collectionId) {
+  const response = await fetch(
+    `https://api.webflow.com/v2/collections/${collectionId}/items/publish`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({ itemIds: [itemId] })
+    }
+  );
   if (!response.ok) {
     const error = await response.json();
     throw new Error(`Erreur publication ${response.status}: ${JSON.stringify(error)}`);
   }
-
   return await response.json();
 }
 
@@ -412,7 +415,6 @@ async function publishWebflowItem(itemId) {
 // ========================================
 async function publishSite() {
   console.log('\n🌐 Publication du site en production...\n');
-
   const response = await fetch(
     `https://api.webflow.com/v2/sites/${WEBFLOW_SITE_ID}/publish`,
     {
@@ -425,14 +427,56 @@ async function publishSite() {
       body: JSON.stringify({})
     }
   );
-
   if (!response.ok) {
     const error = await response.json();
     throw new Error(`Erreur publication site ${response.status}: ${JSON.stringify(error)}`);
   }
-
   console.log('✅ Site publié en production\n');
   return await response.json();
+}
+
+// ========================================
+// 🔄 SYNCHRONISER UNE COLLECTION
+// ========================================
+async function syncCollection({ items, collectionId, createFn, updateFn, label }) {
+  const webflowItems = await fetchWebflowItems(collectionId);
+  const webflowIndex = await cleanDuplicates(webflowItems, collectionId);
+
+  console.log(`═══════════════════════════════════════════════════════`);
+  console.log(`🔄 SYNC ${label.toUpperCase()}`);
+  console.log(`═══════════════════════════════════════════════════════\n`);
+
+  let created = 0, updated = 0, published = 0, errors = 0;
+
+  for (const item of items) {
+    try {
+      console.log(`🔍 ${item.title} (ID: ${item.id})`);
+      const existingId = webflowIndex.get(item.id);
+
+      if (existingId) {
+        await updateFn(existingId, item);
+        console.log(`   ✅ Mis à jour`);
+        updated++;
+        await publishWebflowItem(existingId, collectionId);
+        console.log(`   📢 Publié`);
+        published++;
+      } else {
+        const newItem = await createFn(item);
+        console.log(`   ✅ Créé`);
+        created++;
+        await publishWebflowItem(newItem.id, collectionId);
+        console.log(`   📢 Publié`);
+        published++;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1100));
+    } catch (error) {
+      console.error(`   ❌ ERREUR: ${error.message}`);
+      errors++;
+    }
+  }
+
+  return { created, updated, published, errors };
 }
 
 // ========================================
@@ -452,63 +496,28 @@ async function main() {
       console.log('🚀 Mode production — items CMS synchronisés, publiés, et site republié.\n');
     }
 
-    // 1. Récupérer les produits Shopify
-    const products = await fetchShopifyProducts();
+    // 1. Récupérer les produits Shopify (séparés en produits + catégories)
+    const { produits, categories } = await fetchShopifyProducts();
 
-    // 2. Récupérer les items Webflow
-    const webflowItems = await fetchWebflowItems();
+    // 2. Synchroniser les produits → collection Produits
+    const statsP = await syncCollection({
+      items:      produits,
+      collectionId: WEBFLOW_COLLECTION_ID,
+      createFn:   createWebflowItem,
+      updateFn:   updateWebflowItem,
+      label:      'Produits'
+    });
 
-    // 3. Nettoyer les doublons et créer l'index
-    const webflowIndex = await cleanDuplicates(webflowItems);
+    // 3. Synchroniser les catégories → collection ProductCategories
+    const statsC = await syncCollection({
+      items:      categories,
+      collectionId: WEBFLOW_CATEGORIES_COLLECTION_ID,
+      createFn:   createWebflowCategory,
+      updateFn:   updateWebflowCategory,
+      label:      'Catégories'
+    });
 
-    console.log('═══════════════════════════════════════════════════════');
-    console.log('🔄 SYNCHRONISATION EN COURS');
-    console.log('═══════════════════════════════════════════════════════\n');
-
-    let created = 0;
-    let updated = 0;
-    let published = 0;
-    let errors = 0;
-
-    // 4. Synchroniser chaque produit
-    for (const product of products) {
-      try {
-        console.log(`🔍 ${product.title} (ID: ${product.id})`);
-
-        const existingItemId = webflowIndex.get(product.id);
-
-        if (existingItemId) {
-          console.log(`   🔄 Mise à jour...`);
-          await updateWebflowItem(existingItemId, product);
-          console.log(`   ✅ Mis à jour`);
-          updated++;
-
-          await publishWebflowItem(existingItemId);
-          console.log(`   📢 Item CMS publié`);
-          published++;
-
-        } else {
-          console.log(`   ➕ Création...`);
-          const newItem = await createWebflowItem(product);
-          const newItemId = newItem.id;
-          console.log(`   ✅ Créé`);
-          created++;
-
-          await publishWebflowItem(newItemId);
-          console.log(`   📢 Item CMS publié`);
-          published++;
-        }
-
-        // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1100));
-
-      } catch (error) {
-        console.error(`   ❌ ERREUR: ${error.message}`);
-        errors++;
-      }
-    }
-
-    // 5. En production uniquement : publier le site
+    // 4. En production uniquement : publier le site
     if (ENV === 'production') {
       try {
         await publishSite();
@@ -523,16 +532,21 @@ async function main() {
     console.log('\n═══════════════════════════════════════════════════════');
     console.log(`📊 RÉSUMÉ — ${ENV.toUpperCase()}`);
     console.log('═══════════════════════════════════════════════════════');
-    console.log(`✅ Créés:      ${created}`);
-    console.log(`🔄 Mis à jour: ${updated}`);
-    console.log(`📢 Items CMS:  ${published} publiés`);
+    console.log('📦 PRODUITS');
+    console.log(`   ✅ Créés:      ${statsP.created}`);
+    console.log(`   🔄 Mis à jour: ${statsP.updated}`);
+    console.log(`   📢 Publiés:    ${statsP.published}`);
+    console.log(`   ❌ Erreurs:    ${statsP.errors}`);
+    console.log('🗂️  CATÉGORIES');
+    console.log(`   ✅ Créées:     ${statsC.created}`);
+    console.log(`   🔄 Mises à jour: ${statsC.updated}`);
+    console.log(`   📢 Publiées:   ${statsC.published}`);
+    console.log(`   ❌ Erreurs:    ${statsC.errors}`);
     if (ENV === 'production') {
       console.log(`🌐 Site:       republié en production`);
     } else {
       console.log(`⏸️  Site:       non republié (staging)`);
     }
-    console.log(`❌ Erreurs:    ${errors}`);
-    console.log(`📦 Total:      ${products.length}`);
     console.log('═══════════════════════════════════════════════════════\n');
 
   } catch (error) {
