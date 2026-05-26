@@ -1,4 +1,4 @@
-// sync.js - Synchronisation Shopify → Webflow CMS
+// sync.js - Synchronisation Shopify → Webfl ow CMS
 import fetch from 'node-fetch';
 import fs from 'fs';
 import path from 'path';
