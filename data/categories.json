@@ -1,10 +1,10 @@
 [
   {
-    "slug": "patisseries",
-    "nom": "Test François - Catégorie - Patisseries",
+    "slug": "pattiseries-individuelles",
+    "nom": "Test François - Catégorie - Patisseries individuelles",
     "description": "",
     "image": null,
-    "tagProduits": "patisseries",
+    "tagProduits": "pattiseries-individuelles",
     "lienCommander": "",
     "affichageHome": false,
     "ordre": "0"
