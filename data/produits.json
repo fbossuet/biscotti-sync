@@ -490,16 +490,6 @@
     "lienCC": ""
   },
   {
-    "id": "15978209935705",
-    "slug": "produit-de-test-de-francois",
-    "nom": "produit de test de françois",
-    "description": "",
-    "prix": "0.00",
-    "image": null,
-    "tags": "",
-    "lienCC": ""
-  },
-  {
     "id": "16182851436889",
     "slug": "chocolats-de-paques",
     "nom": "Chocolats de Pâques",
@@ -580,33 +570,23 @@
     "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#boites"
   },
   {
-    "id": "16310611509593",
-    "slug": "bonbons-a-la-menthe",
-    "nom": "bonbons à la menthe",
-    "description": "",
-    "prix": "0.00",
-    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/Captured_ecran2026-05-04a09.02.08.png?v=1779272999",
-    "tags": "bonbons",
-    "lienCC": "https://biscotti-2.webflow.io/commander?tag=bonbons"
+    "id": "16322379645273",
+    "slug": "test-francois-eclair",
+    "nom": "Test François - Eclair",
+    "description": "Eclair au chocolat - description",
+    "prix": "4.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/images_851c6edf-8c7b-4080-b979-b9c556f3c376.jpg?v=1779792724",
+    "tags": "patisseries",
+    "lienCC": ""
   },
   {
-    "id": "16310614819161",
-    "slug": "bonbons-a-la-fraise",
-    "nom": "bonbons à la fraise",
-    "description": "",
-    "prix": "0.00",
-    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/AED53092-3FD7-4CCB-B62E-63F276B8C4C6_1_201_a.jpg?v=1779273045",
-    "tags": "bonbons",
-    "lienCC": "https://biscotti-2.webflow.io/commander?tag=bonbons"
-  },
-  {
-    "id": "16310713123161",
-    "slug": "test-oeufs-sportifs",
-    "nom": "test - Oeufs sportifs -",
-    "description": "Pour les petits et petits sportifs(ves) retrouvez nos œufs basket, foot, tennis et rugby. Disponible au chocolat noir et au lait. (Poids : 230 Grs minimum avec friture) Tous nos sujets sont garnis de friture (lait, noir et blanc) Le délai de préparation des commandes est de 48H. (Attention boutique fermée le Lundi) Toutes les commandes sont à récupérer en boutique aux horaires d'ouverture.",
-    "prix": "24.00",
-    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1694.jpg?v=1773697121",
-    "tags": "bonbons",
-    "lienCC": "https://biscotti-2.webflow.io/commander?tag=bonbons"
+    "id": "16322392686937",
+    "slug": "test-francois-mille-feuilles",
+    "nom": "Test François - Mille feuilles",
+    "description": "Description mille-feuilles.",
+    "prix": "5.00",
+    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/mille-feuille-15-500x500.webp?v=1779793155",
+    "tags": "patisseries",
+    "lienCC": ""
   }
 ]
