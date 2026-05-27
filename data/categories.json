@@ -1,12 +1,12 @@
 [
   {
-    "slug": "bonbons",
-    "nom": "bonbons",
-    "description": "test François - catégorie produit Découvrez notre sélection de bonbons artisanaux",
-    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_6666.jpg?v=1779258652",
-    "tagProduits": "bonbons",
-    "lienCommander": "https://biscotti-2.webflow.io/commander?tag=bonbons",
-    "affichageHome": true,
+    "slug": "patisseries",
+    "nom": "Test François - Catégorie - Patisseries",
+    "description": "",
+    "image": null,
+    "tagProduits": "patisseries",
+    "lienCommander": "",
+    "affichageHome": false,
     "ordre": "0"
   }
 ]
