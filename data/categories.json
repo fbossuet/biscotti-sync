@@ -1,10 +1,10 @@
 [
   {
-    "slug": "pattiseries-individuelles",
+    "slug": "patisseries-individuelles",
     "nom": "Test François - Catégorie - Patisseries individuelles",
     "description": "",
     "image": null,
-    "tagProduits": "pattiseries-individuelles",
+    "tagProduits": "patisseries-individuelles",
     "lienCommander": "https://biscotti-2.webflow.io/categorie?slug=patisseries-individuelles",
     "affichageHome": false,
     "ordre": "0"
