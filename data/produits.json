@@ -576,7 +576,7 @@
     "description": "Eclair au chocolat - description",
     "prix": "4.00",
     "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/images_851c6edf-8c7b-4080-b979-b9c556f3c376.jpg?v=1779792724",
-    "tags": "patisseries",
+    "tags": "patisseries-individuelles",
     "lienCC": ""
   },
   {
@@ -586,7 +586,7 @@
     "description": "Description mille-feuilles.",
     "prix": "5.00",
     "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/mille-feuille-15-500x500.webp?v=1779793155",
-    "tags": "patisseries",
+    "tags": "patisseries-individuelles",
     "lienCC": ""
   }
 ]
