@@ -5,7 +5,7 @@
     "description": "",
     "image": null,
     "tagProduits": "pattiseries-individuelles",
-    "lienCommander": "",
+    "lienCommander": "https://biscotti-2.webflow.io/categorie?slug=patisseries-individuelles",
     "affichageHome": false,
     "ordre": "0"
   }
