@@ -568,15 +568,5 @@
     "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/IMG_1709.jpg?v=1773769477",
     "tags": "Chocolat",
     "lienCC": "https://www.biscotti-biscuiterie.fr/chocolats-paques-commander#boites"
-  },
-  {
-    "id": "16322379645273",
-    "slug": "test-francois-eclair",
-    "nom": "Test François - Eclair",
-    "description": "Eclair au chocolat - description",
-    "prix": "4.00",
-    "image": "https://cdn.shopify.com/s/files/1/0979/1737/0713/files/images_851c6edf-8c7b-4080-b979-b9c556f3c376.jpg?v=1779792724",
-    "tags": "patisseries-individuelles",
-    "lienCC": ""
   }
 ]
