@@ -16,8 +16,7 @@ export function useMonday() {
     if (initialized.current) return;
     initialized.current = true;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const monday = initMonday() as any;
+    const monday = initMonday();
 
     monday.get('context').then((res: { data: MondayContext }) => {
       setContext(res.data);

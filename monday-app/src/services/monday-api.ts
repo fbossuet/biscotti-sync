@@ -4,7 +4,6 @@ import mondaySdk from 'monday-sdk-js';
 const monday = mondaySdk() as any;
 
 export function initMonday() {
-  monday.init();
   return monday;
 }
 
