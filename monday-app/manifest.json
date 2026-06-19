@@ -1,0 +1,108 @@
+{
+  "id": "ina-stock-widget",
+  "name": "INA Stock Widget",
+  "version": "1.0.0",
+  "description": "Widget de gestion de stock et réservation d'équipements pour INA Campus",
+  "features": [
+    {
+      "type": "ItemView",
+      "name": "Stock & Réservation",
+      "url": "index.html",
+      "scopes": [
+        "boards:read",
+        "boards:write",
+        "updates:read",
+        "updates:write"
+      ],
+      "settings": {
+        "famillesBoardId": {
+          "type": "text",
+          "title": "Board ID - Familles d'équipements",
+          "description": "ID du tableau catalogue des familles"
+        },
+        "equipementsBoardId": {
+          "type": "text",
+          "title": "Board ID - Equipements individuels",
+          "description": "ID du tableau inventaire des équipements"
+        },
+        "reservationsBoardId": {
+          "type": "text",
+          "title": "Board ID - Réservations",
+          "description": "ID du tableau des réservations"
+        },
+        "dateFormationColumnId": {
+          "type": "text",
+          "title": "Column ID - Date formation (parent)",
+          "description": "Colonne plage de dates sur la demande parente",
+          "defaultValue": "date_formation"
+        },
+        "quantiteColumnId": {
+          "type": "text",
+          "title": "Column ID - Quantité (sous-élément)",
+          "description": "Colonne quantité requise",
+          "defaultValue": "quantite"
+        },
+        "connexionCatalogueColumnId": {
+          "type": "text",
+          "title": "Column ID - Connexion catalogue (sous-élément)",
+          "description": "Colonne de lien vers le catalogue",
+          "defaultValue": "connexion_catalogue"
+        },
+        "statutEquipementColumnId": {
+          "type": "text",
+          "title": "Column ID - Statut (équipement)",
+          "description": "Colonne statut sur l'équipement individuel",
+          "defaultValue": "statut"
+        },
+        "connexionFamilleColumnId": {
+          "type": "text",
+          "title": "Column ID - Connexion famille (équipement)",
+          "description": "Colonne lien vers la famille d'équipements",
+          "defaultValue": "connexion_famille"
+        },
+        "reservableColumnId": {
+          "type": "text",
+          "title": "Column ID - Réservable (équipement)",
+          "description": "Colonne checkbox réservable",
+          "defaultValue": "reservable"
+        },
+        "plageReservationColumnId": {
+          "type": "text",
+          "title": "Column ID - Plage réservation",
+          "description": "Colonne plage de dates sur la réservation",
+          "defaultValue": "plage_reservation"
+        },
+        "statutReservationColumnId": {
+          "type": "text",
+          "title": "Column ID - Statut (réservation)",
+          "description": "Colonne statut sur la réservation",
+          "defaultValue": "statut_reservation"
+        },
+        "connexionEquipementColumnId": {
+          "type": "text",
+          "title": "Column ID - Connexion équipement (réservation)",
+          "description": "Colonne lien vers l'équipement dans les réservations",
+          "defaultValue": "connexion_equipement"
+        },
+        "connexionDemandeColumnId": {
+          "type": "text",
+          "title": "Column ID - Connexion demande (réservation)",
+          "description": "Colonne lien vers la demande dans les réservations",
+          "defaultValue": "connexion_demande"
+        },
+        "sousFamilleColumnId": {
+          "type": "text",
+          "title": "Column ID - Sous-famille (catalogue)",
+          "description": "Colonne sous-famille sur le tableau catalogue",
+          "defaultValue": "sous_famille"
+        },
+        "osColumnId": {
+          "type": "text",
+          "title": "Column ID - OS (catalogue)",
+          "description": "Colonne OS sur le tableau catalogue",
+          "defaultValue": "os"
+        }
+      }
+    }
+  ]
+}

@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { colors, fonts } from './constants/design-tokens';
 import { useMonday } from './hooks/useMonday';
 import { useSubitemContext } from './hooks/useSubitemContext';
 import { useAvailability } from './hooks/useAvailability';
+import { useAlternatives } from './hooks/useAlternatives';
 import { useReservations } from './hooks/useReservations';
 import { DemandContextCard } from './components/DemandContext/DemandContext';
 import { Widget1 } from './components/Widget1/Widget1';
@@ -10,9 +11,15 @@ import { Widget2 } from './components/Widget2/Widget2';
 import { ReservationModal } from './components/ReservationModal/ReservationModal';
 import { ReservationLines } from './components/ReservationLines/ReservationLines';
 import { Toast } from './components/shared/Toast';
+import { listen } from './services/monday-api';
 import type { ModalState, BoardConfig } from './types';
 
-const DEFAULT_CONFIG: BoardConfig = {
+interface AppConfig extends BoardConfig {
+  sousFamilleColumnId: string;
+  osColumnId: string;
+}
+
+const DEFAULT_CONFIG: AppConfig = {
   famillesBoardId: '',
   equipementsBoardId: '',
   reservationsBoardId: '',
@@ -26,15 +33,29 @@ const DEFAULT_CONFIG: BoardConfig = {
   statutReservationColumnId: 'statut_reservation',
   connexionEquipementColumnId: 'connexion_equipement',
   connexionDemandeColumnId: 'connexion_demande',
+  sousFamilleColumnId: 'sous_famille',
+  osColumnId: 'os',
 };
 
 const ACCENT = colors.accent;
 
 export const App: React.FC = () => {
   const { context, loading: ctxLoading } = useMonday();
-  const [config] = useState<BoardConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    listen('settings', (res: unknown) => {
+      const settings = (res as { data: Record<string, string> }).data;
+      setConfig(prev => ({
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(settings).filter(([, v]) => v !== undefined && v !== ''),
+        ),
+      }));
+    });
+  }, []);
 
   const itemId = context?.itemId ?? null;
 
@@ -46,6 +67,13 @@ export const App: React.FC = () => {
 
   const { result: availability, loading: availLoading, refresh } = useAvailability(
     demand?.familyId ?? null,
+    demand?.dateRange ?? null,
+    config,
+  );
+
+  const { alternatives } = useAlternatives(
+    demand?.familyId ?? null,
+    demand?.sousFamille || null,
     demand?.dateRange ?? null,
     config,
   );
@@ -122,15 +150,39 @@ export const App: React.FC = () => {
     );
 
     setModal(null);
-    setToast(`${quantity} unite(s) reservee(s) avec succes`);
+    setToast(`${quantity} unité(s) réservée(s) avec succès`);
     refresh();
   }, [demand, availability, refresh, reserve, remaining]);
 
   const handleCancel = useCallback(async (reservationId: string, unitId: string) => {
     await cancel(reservationId, unitId);
-    setToast('Reservation annulee');
+    setToast('Réservation annulée');
     refresh();
   }, [cancel, refresh]);
+
+  const configMissing = !config.famillesBoardId || !config.equipementsBoardId || !config.reservationsBoardId;
+
+  if (configMissing) {
+    return (
+      <div style={{
+        fontFamily: fonts.ui, padding: 24, maxWidth: 600, margin: '0 auto',
+      }}>
+        <div style={{
+          background: '#fff4e3', border: '1px solid #ffe0b2', borderRadius: 12,
+          padding: '18px 20px', textAlign: 'center' as const,
+        }}>
+          <div style={{ fontSize: 26, marginBottom: 8 }}>&#x2699;&#xFE0F;</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: colors.text.primary, marginBottom: 6 }}>
+            Configuration requise
+          </div>
+          <div style={{ fontSize: 13, color: colors.text.secondary, lineHeight: 1.5 }}>
+            Veuillez configurer les IDs de tableaux dans les paramètres du widget
+            (Board ID Familles, Équipements et Réservations).
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (ctxLoading || demandLoading) {
     return (
@@ -170,7 +222,7 @@ export const App: React.FC = () => {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         minHeight: 200, fontFamily: fonts.ui, color: colors.text.muted, fontSize: 14,
       }}>
-        {availLoading ? 'Calcul de la disponibilite...' : 'Aucune donnee disponible.'}
+        {availLoading ? 'Calcul de la disponibilité...' : 'Aucune donnée disponible.'}
       </div>
     );
   }
@@ -204,7 +256,7 @@ export const App: React.FC = () => {
         <Widget2
           sousFamille={demand.sousFamille || demand.familyName}
           remaining={remaining}
-          alternatives={[]}
+          alternatives={alternatives}
           accent={ACCENT}
           onReserve={(familyId) => openModal(familyId)}
         />
