@@ -77,11 +77,19 @@ export function useSubitemContext(
           return;
         }
 
+        console.log('[INA Stock] Sub-item columns:', item.column_values.map(c => ({
+          id: c.id, text: c.text, value: c.value,
+        })));
+
         const parent = item.parent_item;
         if (!parent) {
           setError('Demande parente introuvable.');
           return;
         }
+
+        console.log('[INA Stock] Parent columns:', parent.column_values.map(c => ({
+          id: c.id, text: c.text, value: c.value,
+        })));
 
         const dateRange = parseDateRange(
           findColumn(parent.column_values, config.dateFormationColumnId),
