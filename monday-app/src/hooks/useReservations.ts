@@ -15,6 +15,7 @@ export function useReservations(config: BoardConfig) {
       dateRange: DateRange,
       demandItemId: string,
       modelName: string,
+      lineIndex: number,
     ): Promise<ReservationLine[]> => {
       const units = selectUnitsToReserve(available, quantity);
       const newLines: ReservationLine[] = [];
@@ -51,6 +52,7 @@ export function useReservations(config: BoardConfig) {
           serial: unit.serial,
           barcode: unit.barcode,
           dateRange: `${formatDate(dateRange.from)} → ${formatDate(dateRange.to)}`,
+          lineIndex,
         });
       }
 

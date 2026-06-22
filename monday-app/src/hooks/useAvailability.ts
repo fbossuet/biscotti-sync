@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { apiCall } from '../services/monday-api';
 import { GET_CATALOGUE_ITEM_WITH_SUBITEMS, GET_RESERVATIONS_FOR_EQUIPMENT } from '../services/queries';
 import { computeAvailability, type ReservationRecord } from '../services/availability';
-import type { DateRange, Equipment, AvailabilityResult, BoardConfig } from '../types';
+import type { DateRange, Equipment, AvailabilityResult, BoardConfig, DemandLine } from '../types';
 
 interface RawItem {
   id: string;
@@ -13,7 +13,6 @@ interface RawItem {
 
 function parseSubitemEquipment(item: RawItem): Equipment {
   const getCol = (id: string) => item.column_values.find(c => c.id === id);
-
   const statusCol = getCol('status');
   const statusText = (statusCol?.text || 'disponible').toLowerCase();
 
@@ -36,8 +35,13 @@ function parseReservation(item: RawItem, config: BoardConfig): ReservationRecord
   if (eqCol?.value) {
     try {
       const parsed = JSON.parse(eqCol.value);
-      const ids = parsed.linkedPulseIds || parsed.linked_pulse_ids || [];
-      if (ids.length > 0) equipmentId = String(ids[0].linkedPulseId || ids[0].linked_pulse_id);
+      const ids = parsed.linkedPulseIds || parsed.linked_pulse_ids;
+      if (Array.isArray(ids) && ids.length > 0) {
+        equipmentId = String(ids[0].linkedPulseId || ids[0].linked_pulse_id);
+      }
+      if (!equipmentId && Array.isArray(parsed.linked_item_ids)) {
+        equipmentId = String(parsed.linked_item_ids[0] || '');
+      }
     } catch { /* ignore */ }
   }
 
@@ -52,74 +56,88 @@ function parseReservation(item: RawItem, config: BoardConfig): ReservationRecord
   if (!dateFrom || !dateTo) return null;
 
   const statusCol = getCol(config.statutReservationColumnId);
-  const status = statusCol?.text || 'pre_reserve';
-
-  return { equipmentId, dateFrom, dateTo, status };
+  return { equipmentId, dateFrom, dateTo, status: statusCol?.text || 'pre_reserve' };
 }
 
-export function useAvailability(
-  familyId: string | null,
+export async function fetchAvailabilityForFamily(
+  familyId: string,
+  dateRange: DateRange,
+  config: BoardConfig,
+): Promise<AvailabilityResult> {
+  const catalogueData = await apiCall<{ items: RawItem[] }>(
+    GET_CATALOGUE_ITEM_WITH_SUBITEMS,
+    { itemId: [familyId] },
+  );
+
+  const catalogueItem = catalogueData.items?.[0];
+  if (!catalogueItem?.subitems?.length) {
+    return {
+      available: [], reserved: [], maintenance: [],
+      total: 0, availableCount: 0, reservedCount: 0, maintenanceCount: 0,
+    };
+  }
+
+  const equipment = catalogueItem.subitems.map(parseSubitemEquipment);
+
+  const allReservations: ReservationRecord[] = [];
+  for (const eq of equipment) {
+    try {
+      const resData = await apiCall<{
+        items_page_by_column_values: { items: RawItem[] };
+      }>(GET_RESERVATIONS_FOR_EQUIPMENT, {
+        boardId: config.reservationsBoardId,
+        columnId: config.connexionEquipementColumnId,
+        equipmentId: eq.id,
+      });
+      for (const item of resData.items_page_by_column_values.items) {
+        const r = parseReservation(item, config);
+        if (r) allReservations.push(r);
+      }
+    } catch { /* no reservations */ }
+  }
+
+  return computeAvailability(equipment, allReservations, dateRange);
+}
+
+export function useMultiAvailability(
+  lines: DemandLine[],
   dateRange: DateRange | null,
   config: BoardConfig,
 ) {
-  const [result, setResult] = useState<AvailabilityResult | null>(null);
+  const [results, setResults] = useState<Map<number, AvailabilityResult>>(new Map());
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!familyId || !dateRange) return null;
+    if (!dateRange || lines.length === 0) return new Map<number, AvailabilityResult>();
 
     setLoading(true);
+    const newResults = new Map<number, AvailabilityResult>();
+
     try {
-      const catalogueData = await apiCall<{ items: RawItem[] }>(
-        GET_CATALOGUE_ITEM_WITH_SUBITEMS,
-        { itemId: [familyId] },
-      );
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.familyId || line.error) continue;
 
-      const catalogueItem = catalogueData.items?.[0];
-      if (!catalogueItem?.subitems?.length) {
-        setResult({
-          available: [], reserved: [], maintenance: [],
-          total: 0, availableCount: 0, reservedCount: 0, maintenanceCount: 0,
-        });
-        return null;
-      }
-
-      const equipment = catalogueItem.subitems.map(parseSubitemEquipment);
-
-      const allReservations: ReservationRecord[] = [];
-      for (const eq of equipment) {
         try {
-          const resData = await apiCall<{
-            items_page_by_column_values: { items: RawItem[] };
-          }>(GET_RESERVATIONS_FOR_EQUIPMENT, {
-            boardId: config.reservationsBoardId,
-            columnId: config.connexionEquipementColumnId,
-            equipmentId: eq.id,
-          });
-
-          for (const item of resData.items_page_by_column_values.items) {
-            const r = parseReservation(item, config);
-            if (r) allReservations.push(r);
-          }
-        } catch {
-          // No reservations for this unit
+          const avail = await fetchAvailabilityForFamily(line.familyId, dateRange, config);
+          newResults.set(i, avail);
+        } catch (err) {
+          console.error(`[INA Stock] Availability error for line ${i}:`, err);
         }
       }
-
-      const avail = computeAvailability(equipment, allReservations, dateRange);
-      setResult(avail);
-      return avail;
+      setResults(newResults);
     } catch (err) {
-      console.error('Availability fetch error:', err);
-      return null;
+      console.error('[INA Stock] Multi-availability error:', err);
     } finally {
       setLoading(false);
     }
-  }, [familyId, dateRange, config]);
+
+    return newResults;
+  }, [lines, dateRange, config]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return { result, loading, refresh };
+  return { results, loading, refresh };
 }

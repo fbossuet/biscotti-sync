@@ -39,6 +39,7 @@ export interface DateRange {
   to: string;
 }
 
+/** @deprecated Use DemandOverview + DemandLine instead */
 export interface DemandContext {
   itemId: string;
   parentItemId: string;
@@ -48,6 +49,22 @@ export interface DemandContext {
   os: string;
   dateRange: DateRange;
   quantite: number;
+}
+
+export interface DemandLine {
+  subitemId: string;
+  familyId: string | null;
+  familyName: string;
+  quantite: number;
+  error: string | null;
+}
+
+export interface DemandOverview {
+  parentId: string;
+  parentName: string;
+  formationName: string;
+  dateRange: DateRange;
+  lines: DemandLine[];
 }
 
 export interface AvailabilityResult {
@@ -70,6 +87,7 @@ export type ModalStep = 'saisie' | 'proposition' | 'epuise';
 
 export interface ModalState {
   step: ModalStep;
+  lineIndex: number;
   targetFamilyId: string;
   modelName: string;
   availableCount: number;
@@ -85,6 +103,7 @@ export interface ReservationLine {
   serial: string;
   barcode: string;
   dateRange: string;
+  lineIndex: number;
 }
 
 export interface BoardConfig {

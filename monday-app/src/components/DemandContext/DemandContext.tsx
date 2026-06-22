@@ -2,20 +2,18 @@ import React from 'react';
 import { colors, fonts } from '../../constants/design-tokens';
 
 interface Props {
-  sousFamille: string;
-  modele: string;
-  os: string;
+  parentName: string;
+  formationName: string;
   dateRange: string;
-  quantite: number;
-  reserved: number;
+  totalLines: number;
+  coveredLines: number;
   accent: string;
 }
 
 export const DemandContextCard: React.FC<Props> = ({
-  sousFamille, modele, os, dateRange, quantite, reserved, accent,
+  parentName, formationName, dateRange, totalLines, coveredLines, accent,
 }) => {
-  const covered = reserved >= quantite;
-  const pct = Math.min(100, Math.round((reserved / quantite) * 100));
+  const allCovered = coveredLines >= totalLines;
 
   return (
     <div style={{
@@ -30,18 +28,13 @@ export const DemandContextCard: React.FC<Props> = ({
         <span style={{
           fontSize: 12, fontWeight: 700, letterSpacing: '.5px',
           textTransform: 'uppercase' as const, color: colors.text.muted,
-        }}>Sous-élément · Besoin matériel</span>
+        }}>Demande de matériel</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
-        <LabelValue label="Sous-famille" value={sousFamille} />
-        <div>
-          <Label>Modèle demandé</Label>
-          <Value>{modele}</Value>
-          <div style={{ fontSize: 11.5, color: colors.text.muted, marginTop: 2 }}>{os}</div>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+        <LabelValue label="Demande" value={parentName} />
+        <LabelValue label="Formation" value={formationName || '—'} />
         <LabelValue label="Période" value={dateRange} />
-        <LabelValue label="Quantité voulue" value={`${quantite} unités`} />
       </div>
 
       <div style={{ height: 1, background: colors.border.light, margin: '16px 0 14px' }} />
@@ -49,21 +42,26 @@ export const DemandContextCard: React.FC<Props> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: colors.text.secondary }}>Couverture du besoin</span>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: colors.text.body }}>{reserved} / {quantite} réservées</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: colors.text.secondary }}>
+              Lignes de matériel
+            </span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: colors.text.body }}>
+              {coveredLines} / {totalLines} couvertes
+            </span>
           </div>
           <div style={{ height: 8, background: '#eef0f4', borderRadius: 99, overflow: 'hidden' }}>
             <div style={{
               height: '100%', borderRadius: 99, transition: 'width .4s ease',
-              width: `${pct}%`, background: covered ? '#00c875' : accent,
+              width: `${totalLines > 0 ? Math.round((coveredLines / totalLines) * 100) : 0}%`,
+              background: allCovered ? '#00c875' : accent,
             }} />
           </div>
         </div>
         <span style={{
           fontSize: 12, fontWeight: 700, padding: '5px 11px', borderRadius: 99, whiteSpace: 'nowrap' as const,
-          background: covered ? '#e9f7ef' : '#fff4e3',
-          color: covered ? '#00854d' : '#9c5a00',
-        }}>{covered ? 'Couvert' : 'En cours'}</span>
+          background: allCovered ? '#e9f7ef' : '#fff4e3',
+          color: allCovered ? '#00854d' : '#9c5a00',
+        }}>{allCovered ? 'Tout couvert' : 'En cours'}</span>
       </div>
     </div>
   );

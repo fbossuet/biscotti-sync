@@ -1,17 +1,14 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { colors, fonts } from './constants/design-tokens';
 import { useMonday } from './hooks/useMonday';
-import { useSubitemContext } from './hooks/useSubitemContext';
-import { useAvailability } from './hooks/useAvailability';
-import { useAlternatives } from './hooks/useAlternatives';
+import { useDemandContext } from './hooks/useDemandContext';
+import { useMultiAvailability, fetchAvailabilityForFamily } from './hooks/useAvailability';
 import { useReservations } from './hooks/useReservations';
 import { DemandContextCard } from './components/DemandContext/DemandContext';
-import { Widget1 } from './components/Widget1/Widget1';
-import { Widget2 } from './components/Widget2/Widget2';
+import { LineCard } from './components/LineCard/LineCard';
 import { ReservationModal } from './components/ReservationModal/ReservationModal';
 import { ReservationLines } from './components/ReservationLines/ReservationLines';
 import { Toast } from './components/shared/Toast';
-import { listen } from './services/monday-api';
 import type { ModalState, BoardConfig } from './types';
 
 interface AppConfig extends BoardConfig {
@@ -41,49 +38,27 @@ const ACCENT = colors.accent;
 
 export const App: React.FC = () => {
   const { context, loading: ctxLoading } = useMonday();
-  const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
+  const [config] = useState<AppConfig>(DEFAULT_CONFIG);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  useEffect(() => {
-    listen('settings', (res: unknown) => {
-      const settings = (res as { data: Record<string, string> }).data;
-      setConfig(prev => ({
-        ...prev,
-        ...Object.fromEntries(
-          Object.entries(settings).filter(([, v]) => v !== undefined && v !== ''),
-        ),
-      }));
-    });
-  }, []);
-
   const itemId = context?.itemId ?? null;
 
-  const { demand, loading: demandLoading, error: demandError } = useSubitemContext(itemId, {
+  const { demand, loading: demandLoading, error: demandError } = useDemandContext(itemId, {
     dateFormationColumnId: config.dateFormationColumnId,
     quantiteColumnId: config.quantiteColumnId,
     connexionCatalogueColumnId: config.connexionCatalogueColumnId,
   });
 
-  const { result: availability, loading: availLoading, refresh } = useAvailability(
-    demand?.familyId ?? null,
+  const lines = demand?.lines ?? [];
+
+  const { results: availMap, loading: availLoading, refresh } = useMultiAvailability(
+    lines,
     demand?.dateRange ?? null,
     config,
   );
 
-  const { alternatives } = useAlternatives(
-    demand?.familyId ?? null,
-    demand?.sousFamille || null,
-    demand?.dateRange ?? null,
-    config,
-  );
-
-  const { lines, reservedIds, reserve, cancel } = useReservations(config);
-
-  const reserved = lines.length;
-  const quantite = demand?.quantite ?? 0;
-  const covered = reserved >= quantite;
-  const remaining = Math.max(0, quantite - reserved);
+  const { lines: resLines, reservedIds, reserve, cancel } = useReservations(config);
 
   const formatDateRange = useCallback(() => {
     if (!demand?.dateRange) return '';
@@ -96,21 +71,34 @@ export const App: React.FC = () => {
 
   const dateRangeStr = formatDateRange();
 
-  const openModal = useCallback((familyId?: string) => {
-    if (!availability || !demand) return;
-    const maxNeeded = remaining;
+  const getReservedCountForLine = useCallback((lineIndex: number) =>
+    resLines.filter(r => r.lineIndex === lineIndex).length, [resLines]);
+
+  const coveredLines = lines.filter((line, i) => {
+    if (line.error) return false;
+    return getReservedCountForLine(i) >= line.quantite;
+  }).length;
+
+  const openModal = useCallback((lineIndex: number) => {
+    const line = lines[lineIndex];
+    const avail = availMap.get(lineIndex);
+    if (!line || !avail || !demand) return;
+
+    const reserved = getReservedCountForLine(lineIndex);
+    const maxNeeded = Math.max(0, line.quantite - reserved);
     if (maxNeeded <= 0) return;
 
     setModal({
       step: 'saisie',
-      targetFamilyId: familyId || demand.familyId,
-      modelName: demand.familyName,
-      availableCount: availability.availableCount,
-      requested: Math.min(maxNeeded, availability.availableCount),
+      lineIndex,
+      targetFamilyId: line.familyId!,
+      modelName: line.familyName,
+      availableCount: avail.availableCount,
+      requested: Math.min(maxNeeded, avail.availableCount),
       maxNeeded,
       proposed: 0,
     });
-  }, [availability, demand, remaining]);
+  }, [lines, availMap, demand, getReservedCountForLine]);
 
   const handleQuantityChange = useCallback((delta: number) => {
     setModal(prev => {
@@ -122,16 +110,19 @@ export const App: React.FC = () => {
   }, []);
 
   const handleConfirm = useCallback(async (quantity: number) => {
-    if (!demand || !availability) return;
+    if (!demand || !modal) return;
 
-    const freshAvail = await refresh();
-    if (!freshAvail) return;
+    const line = lines[modal.lineIndex];
+    if (!line?.familyId) return;
+
+    const freshAvail = await fetchAvailabilityForFamily(line.familyId, demand.dateRange, config);
 
     if (freshAvail.availableCount === 0) {
       setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
       return;
     }
 
+    const remaining = Math.max(0, line.quantite - getReservedCountForLine(modal.lineIndex));
     if (freshAvail.availableCount < quantity) {
       setModal(prev => prev ? {
         ...prev, step: 'proposition',
@@ -145,14 +136,15 @@ export const App: React.FC = () => {
       freshAvail.available,
       quantity,
       demand.dateRange,
-      demand.itemId,
-      demand.familyName,
+      demand.parentId,
+      line.familyName,
+      modal.lineIndex,
     );
 
     setModal(null);
-    setToast(`${quantity} unité(s) réservée(s) avec succès`);
+    setToast(`${quantity} unité(s) réservée(s) pour ${line.familyName}`);
     refresh();
-  }, [demand, availability, refresh, reserve, remaining]);
+  }, [demand, modal, lines, config, reserve, refresh, getReservedCountForLine]);
 
   const handleCancel = useCallback(async (reservationId: string, unitId: string) => {
     await cancel(reservationId, unitId);
@@ -160,13 +152,11 @@ export const App: React.FC = () => {
     refresh();
   }, [cancel, refresh]);
 
-  const configMissing = !config.famillesBoardId || !config.equipementsBoardId || !config.reservationsBoardId;
+  const configMissing = !config.famillesBoardId || !config.reservationsBoardId;
 
   if (configMissing) {
     return (
-      <div style={{
-        fontFamily: fonts.ui, padding: 24, maxWidth: 600, margin: '0 auto',
-      }}>
+      <div style={{ fontFamily: fonts.ui, padding: 24, maxWidth: 600, margin: '0 auto' }}>
         <div style={{
           background: '#fff4e3', border: '1px solid #ffe0b2', borderRadius: 12,
           padding: '18px 20px', textAlign: 'center' as const,
@@ -176,8 +166,7 @@ export const App: React.FC = () => {
             Configuration requise
           </div>
           <div style={{ fontSize: 13, color: colors.text.secondary, lineHeight: 1.5 }}>
-            Veuillez configurer les IDs de tableaux dans les paramètres du widget
-            (Board ID Familles, Équipements et Réservations).
+            Veuillez configurer les IDs de tableaux dans les paramètres du widget.
           </div>
         </div>
       </div>
@@ -190,16 +179,14 @@ export const App: React.FC = () => {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         minHeight: 200, fontFamily: fonts.ui, color: colors.text.muted, fontSize: 14,
       }}>
-        Chargement...
+        Chargement de la demande...
       </div>
     );
   }
 
   if (demandError) {
     return (
-      <div style={{
-        fontFamily: fonts.ui, padding: 24, maxWidth: 600, margin: '0 auto',
-      }}>
+      <div style={{ fontFamily: fonts.ui, padding: 24, maxWidth: 600, margin: '0 auto' }}>
         <div style={{
           background: '#fdf2f3', border: '1px solid #f3d3d8', borderRadius: 12,
           padding: '18px 20px', textAlign: 'center' as const,
@@ -216,13 +203,13 @@ export const App: React.FC = () => {
     );
   }
 
-  if (!demand || !availability) {
+  if (!demand) {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         minHeight: 200, fontFamily: fonts.ui, color: colors.text.muted, fontSize: 14,
       }}>
-        {availLoading ? 'Calcul de la disponibilité...' : 'Aucune donnée disponible.'}
+        Aucune donnée disponible.
       </div>
     );
   }
@@ -230,39 +217,53 @@ export const App: React.FC = () => {
   return (
     <div style={{
       fontFamily: fonts.ui, padding: 20, maxWidth: 720, margin: '0 auto',
-      display: 'flex', flexDirection: 'column', gap: 16,
+      display: 'flex', flexDirection: 'column', gap: 12,
     }}>
       <DemandContextCard
-        sousFamille={demand.sousFamille || demand.familyName}
-        modele={demand.familyName}
-        os={demand.os}
+        parentName={demand.parentName}
+        formationName={demand.formationName}
         dateRange={dateRangeStr}
-        quantite={quantite}
-        reserved={reserved}
+        totalLines={lines.filter(l => !l.error).length}
+        coveredLines={coveredLines}
         accent={ACCENT}
       />
 
-      <Widget1
-        modele={demand.familyName}
-        dateRange={dateRangeStr}
-        availability={availability}
-        reservedIds={reservedIds}
-        covered={covered}
-        accent={ACCENT}
-        onReserve={() => openModal()}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+        <span style={{ width: 8, height: 8, borderRadius: 99, background: ACCENT }} />
+        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: colors.text.primary }}>
+          Lignes de matériel ({lines.length})
+        </h2>
+        {availLoading && (
+          <span style={{ fontSize: 12, color: colors.text.muted, marginLeft: 'auto' }}>
+            Vérification de la disponibilité...
+          </span>
+        )}
+      </div>
 
-      {!covered && (
-        <Widget2
-          sousFamille={demand.sousFamille || demand.familyName}
-          remaining={remaining}
-          alternatives={alternatives}
+      {lines.map((line, i) => (
+        <LineCard
+          key={line.subitemId}
+          line={line}
+          lineIndex={i}
+          availability={availMap.get(i) ?? null}
+          reservedCount={getReservedCountForLine(i)}
+          loading={availLoading && !availMap.has(i)}
           accent={ACCENT}
-          onReserve={(familyId) => openModal(familyId)}
+          onReserve={openModal}
         />
-      )}
+      ))}
 
-      <ReservationLines lines={lines} onCancel={handleCancel} />
+      {resLines.length > 0 && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 99, background: '#00c875' }} />
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: colors.text.primary }}>
+              Réservations effectuées ({resLines.length})
+            </h2>
+          </div>
+          <ReservationLines lines={resLines} onCancel={handleCancel} />
+        </>
+      )}
 
       {modal && (
         <ReservationModal

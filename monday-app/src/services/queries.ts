@@ -21,6 +21,29 @@ export const GET_SUBITEM_CONTEXT = `
   }
 `;
 
+export const GET_DEMAND_WITH_SUBITEMS = `
+  query GetDemandWithSubitems($itemId: [ID!]!) {
+    items(ids: $itemId) {
+      id
+      name
+      column_values {
+        id
+        text
+        value
+      }
+      subitems {
+        id
+        name
+        column_values {
+          id
+          text
+          value
+        }
+      }
+    }
+  }
+`;
+
 export const GET_EQUIPMENT_BY_FAMILY = `
   query GetEquipmentByFamily($boardId: ID!, $columnId: String!, $familyItemId: String!) {
     items_page_by_column_values(
