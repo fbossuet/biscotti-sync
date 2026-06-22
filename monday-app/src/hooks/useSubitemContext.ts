@@ -34,14 +34,33 @@ function parseDateRange(col: ColumnValue | undefined): DateRange | null {
 }
 
 function parseConnectedItemId(col: ColumnValue | undefined): string | null {
-  if (!col?.value) return null;
-  try {
-    const parsed = JSON.parse(col.value);
-    const ids = parsed.linkedPulseIds || parsed.linked_pulse_ids;
-    if (Array.isArray(ids) && ids.length > 0) {
-      return String(ids[0].linkedPulseId || ids[0].linked_pulse_id);
-    }
-  } catch { /* ignore */ }
+  if (!col) return null;
+  console.log('[INA Stock] Parsing board_relation column:', { id: col.id, text: col.text, value: col.value });
+
+  if (col.value) {
+    try {
+      const parsed = JSON.parse(col.value);
+      // Format v1: {"linkedPulseIds":[{"linkedPulseId":123}]}
+      const pulseIds = parsed.linkedPulseIds || parsed.linked_pulse_ids;
+      if (Array.isArray(pulseIds) && pulseIds.length > 0) {
+        return String(pulseIds[0].linkedPulseId || pulseIds[0].linked_pulse_id);
+      }
+      // Format v2: {"linked_item_ids":["123"]}
+      if (Array.isArray(parsed.linked_item_ids) && parsed.linked_item_ids.length > 0) {
+        return String(parsed.linked_item_ids[0]);
+      }
+      // Format v3: {"item_ids":[123]}
+      if (Array.isArray(parsed.item_ids) && parsed.item_ids.length > 0) {
+        return String(parsed.item_ids[0]);
+      }
+    } catch { /* ignore */ }
+  }
+
+  // Fallback: extract ID from text if it contains a number
+  if (col.text) {
+    const match = col.text.match(/^(\d+)/);
+    if (match) return match[1];
+  }
   return null;
 }
 
