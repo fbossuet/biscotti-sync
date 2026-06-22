@@ -101,6 +101,29 @@ export const GET_FAMILIES_BY_SOUS_FAMILLE = `
   }
 `;
 
+export const GET_CATALOGUE_ITEM_WITH_SUBITEMS = `
+  query GetCatalogueItemWithSubitems($itemId: [ID!]!) {
+    items(ids: $itemId) {
+      id
+      name
+      column_values {
+        id
+        text
+        value
+      }
+      subitems {
+        id
+        name
+        column_values {
+          id
+          text
+          value
+        }
+      }
+    }
+  }
+`;
+
 export const GET_BOARD_ITEMS = `
   query GetBoardItems($boardId: ID!) {
     boards(ids: [$boardId]) {
