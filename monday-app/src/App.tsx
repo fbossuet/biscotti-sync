@@ -20,9 +20,9 @@ interface AppConfig extends BoardConfig {
 }
 
 const DEFAULT_CONFIG: AppConfig = {
-  famillesBoardId: '',
+  famillesBoardId: '5098193893',
   equipementsBoardId: '5094410740',
-  reservationsBoardId: '5098193893',
+  reservationsBoardId: '5098977881',
   dateFormationColumnId: 'date_formation',
   quantiteColumnId: 'quantite',
   connexionCatalogueColumnId: 'connexion_catalogue',
@@ -160,7 +160,7 @@ export const App: React.FC = () => {
     refresh();
   }, [cancel, refresh]);
 
-  const configMissing = !config.equipementsBoardId || !config.reservationsBoardId;
+  const configMissing = !config.famillesBoardId || !config.equipementsBoardId || !config.reservationsBoardId;
 
   if (configMissing) {
     return (
