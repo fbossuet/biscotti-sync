@@ -26,15 +26,15 @@ const DEFAULT_CONFIG: AppConfig = {
   dateFormationColumnId: 'date_formation',
   quantiteColumnId: 'quantite',
   connexionCatalogueColumnId: 'connexion_catalogue',
-  statutEquipementColumnId: 'statut',
-  connexionFamilleColumnId: 'connexion_famille',
-  reservableColumnId: 'reservable',
+  statutEquipementColumnId: 'color_mm2952ze',
+  connexionFamilleColumnId: 'color_mm3k513j',
+  reservableColumnId: 'numeric_mm2921rk',
   plageReservationColumnId: 'timerange_mm4j12mz',
   statutReservationColumnId: 'status',
   connexionEquipementColumnId: 'board_relation_mm4j1ene',
   connexionDemandeColumnId: 'board_relation_mm4jaj64',
-  sousFamilleColumnId: 'sous_famille',
-  osColumnId: 'os',
+  sousFamilleColumnId: 'color_mm3x282f',
+  osColumnId: 'color_mm29yn1b',
 };
 
 const ACCENT = colors.accent;
