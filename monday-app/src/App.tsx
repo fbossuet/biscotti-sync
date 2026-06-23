@@ -133,16 +133,19 @@ export const App: React.FC = () => {
     const line = lines[modal.lineIndex];
     if (!line?.familyId) return;
 
+    const targetFamilyId = modal.targetFamilyId;
+    const targetModelName = modal.modelName;
+
     setConfirming(true);
-    console.log('[INA Stock] handleConfirm started, quantity:', quantity);
+    console.log('[INA Stock] handleConfirm started, quantity:', quantity, 'target:', targetModelName);
 
     try {
-      const freshAvail = await fetchAvailabilityForFamily(line.familyId, demand.dateRange, config);
+      const freshAvail = await fetchAvailabilityForFamily(targetFamilyId, demand.dateRange, config);
       console.log('[INA Stock] Fresh availability:', freshAvail.availableCount, 'available');
 
       if (freshAvail.availableCount === 0) {
         setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
-        searchAlternatives(line.familyName, demand.dateRange, config, line.familyId!);
+        searchAlternatives(targetModelName, demand.dateRange, config, targetFamilyId);
         return;
       }
 
@@ -162,12 +165,18 @@ export const App: React.FC = () => {
         quantity,
         demand.dateRange,
         line.subitemId,
-        line.familyName,
+        targetModelName,
         modal.lineIndex,
       );
 
-      setModal(null);
-      setToast(`${quantity} unité(s) réservée(s) pour ${line.familyName}`);
+      const newReserved = getReservedCountForLine(modal.lineIndex) + quantity;
+      if (newReserved >= line.quantite) {
+        setModal(null);
+        setToast(`Besoin couvert ! ${quantity} unité(s) réservée(s) pour ${targetModelName}`);
+      } else {
+        setModal(null);
+        setToast(`${quantity} unité(s) réservée(s) pour ${targetModelName} — il reste ${line.quantite - newReserved} unité(s) à couvrir`);
+      }
       refresh();
     } catch (err) {
       console.error('[INA Stock] Reservation error:', err);
