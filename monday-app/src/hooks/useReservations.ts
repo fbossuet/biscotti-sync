@@ -29,6 +29,9 @@ export function useReservations(config: BoardConfig) {
             from: dateRange.from,
             to: dateRange.to,
           },
+          [config.connexionDemandeColumnId]: {
+            item_ids: [parseInt(demandItemId, 10)],
+          },
         };
 
         const columnValues = JSON.stringify(colVals);

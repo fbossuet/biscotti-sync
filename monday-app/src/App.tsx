@@ -143,7 +143,7 @@ export const App: React.FC = () => {
         freshAvail.available,
         quantity,
         demand.dateRange,
-        demand.parentId,
+        line.subitemId,
         line.familyName,
         modal.lineIndex,
       );
