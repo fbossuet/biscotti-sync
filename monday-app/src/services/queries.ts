@@ -38,6 +38,9 @@ export const GET_DEMAND_WITH_SUBITEMS = `
           id
           text
           value
+          ... on BoardRelationValue {
+            linked_item_ids
+          }
         }
       }
     }

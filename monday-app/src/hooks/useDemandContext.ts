@@ -7,6 +7,7 @@ interface ColumnValue {
   id: string;
   text: string;
   value: string;
+  linked_item_ids?: string[];
 }
 
 interface RawItem {
@@ -32,6 +33,12 @@ function parseDateRange(col: ColumnValue | undefined): DateRange | null {
 function parseConnectedItemId(col: ColumnValue | undefined): string | null {
   if (!col) return null;
 
+  // API 2024-10+: linked_item_ids is a top-level field on BoardRelationValue
+  if (Array.isArray(col.linked_item_ids) && col.linked_item_ids.length > 0) {
+    return String(col.linked_item_ids[0]);
+  }
+
+  // Fallback: parse from JSON value string
   if (col.value) {
     try {
       const parsed = JSON.parse(col.value);
@@ -41,9 +48,6 @@ function parseConnectedItemId(col: ColumnValue | undefined): string | null {
       }
       if (Array.isArray(parsed.linked_item_ids) && parsed.linked_item_ids.length > 0) {
         return String(parsed.linked_item_ids[0]);
-      }
-      if (Array.isArray(parsed.item_ids) && parsed.item_ids.length > 0) {
-        return String(parsed.item_ids[0]);
       }
     } catch { /* ignore */ }
   }
@@ -130,8 +134,12 @@ export function useDemandContext(
         if (subitems[0]) {
           const cols = subitems[0].column_values;
           const catalogueCol = cols.find(c => c.id === config.connexionCatalogueColumnId);
-          console.log('[INA Stock] CATALOGUE COLUMN RAW:', JSON.stringify(catalogueCol));
-          console.log('[INA Stock] ALL SUB-ITEM COLS:', JSON.stringify(cols.map(c => c.id + '=' + (c.value || '(null)').slice(0, 80))));
+          console.log('[INA Stock] CATALOGUE COLUMN RAW:', JSON.stringify({
+            id: catalogueCol?.id,
+            text: catalogueCol?.text,
+            value: catalogueCol?.value,
+            linked_item_ids: (catalogueCol as any)?.linked_item_ids,
+          }));
         }
 
         const formationNameCol = findColumn(item.column_values, 'text_mm295wsj');

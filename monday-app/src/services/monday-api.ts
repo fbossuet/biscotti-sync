@@ -11,7 +11,7 @@ export async function apiCall<T = unknown>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
-  const res = await monday.api(query, { variables });
+  const res = await monday.api(query, { variables, apiVersion: '2024-10' });
   if (res.errors) {
     throw new Error(res.errors.map((e: { message: string }) => e.message).join(', '));
   }
