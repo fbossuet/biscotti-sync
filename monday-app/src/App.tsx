@@ -91,6 +91,21 @@ export const App: React.FC = () => {
     const maxNeeded = Math.max(0, line.quantite - reserved);
     if (maxNeeded <= 0) return;
 
+    if (avail.availableCount === 0) {
+      setModal({
+        step: 'epuise',
+        lineIndex,
+        targetFamilyId: line.familyId!,
+        modelName: line.familyName,
+        availableCount: 0,
+        requested: 0,
+        maxNeeded,
+        proposed: 0,
+      });
+      searchAlternatives(line.familyName, demand.dateRange, config);
+      return;
+    }
+
     setModal({
       step: 'saisie',
       lineIndex,
@@ -101,7 +116,7 @@ export const App: React.FC = () => {
       maxNeeded,
       proposed: 0,
     });
-  }, [lines, availMap, demand, getReservedCountForLine]);
+  }, [lines, availMap, demand, getReservedCountForLine, searchAlternatives, config]);
 
   const handleQuantityChange = useCallback((delta: number) => {
     setModal(prev => {

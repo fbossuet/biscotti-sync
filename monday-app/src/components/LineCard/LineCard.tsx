@@ -100,6 +100,18 @@ export const LineCard: React.FC<Props> = ({
               >Réserver</button>
             )}
 
+            {/* Alternatives button when no stock */}
+            {!covered && availCount === 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onReserve(lineIndex); }}
+                style={{
+                  border: `1px solid ${accent}`, borderRadius: 7, padding: '6px 14px', fontSize: 12.5,
+                  fontWeight: 700, color: accent, cursor: 'pointer',
+                  background: '#fff', fontFamily: fonts.ui,
+                }}
+              >Alternatives</button>
+            )}
+
             {/* Expand arrow */}
             <span style={{
               fontSize: 11, color: colors.text.muted,
