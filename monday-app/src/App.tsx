@@ -41,6 +41,7 @@ export const App: React.FC = () => {
   const [config] = useState<AppConfig>(DEFAULT_CONFIG);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const itemId = context?.itemId ?? null;
 
@@ -110,13 +111,17 @@ export const App: React.FC = () => {
   }, []);
 
   const handleConfirm = useCallback(async (quantity: number) => {
-    if (!demand || !modal) return;
+    if (!demand || !modal || confirming) return;
 
     const line = lines[modal.lineIndex];
     if (!line?.familyId) return;
 
+    setConfirming(true);
+    console.log('[INA Stock] handleConfirm started, quantity:', quantity);
+
     try {
       const freshAvail = await fetchAvailabilityForFamily(line.familyId, demand.dateRange, config);
+      console.log('[INA Stock] Fresh availability:', freshAvail.availableCount, 'available');
 
       if (freshAvail.availableCount === 0) {
         setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
@@ -133,6 +138,7 @@ export const App: React.FC = () => {
         return;
       }
 
+      console.log('[INA Stock] Calling reserve with', quantity, 'units');
       await reserve(
         freshAvail.available,
         quantity,
@@ -149,8 +155,10 @@ export const App: React.FC = () => {
       console.error('[INA Stock] Reservation error:', err);
       setModal(null);
       setToast(`Erreur: ${err instanceof Error ? err.message : 'Échec de la réservation'}`);
+    } finally {
+      setConfirming(false);
     }
-  }, [demand, modal, lines, config, reserve, refresh, getReservedCountForLine]);
+  }, [demand, modal, lines, config, reserve, refresh, getReservedCountForLine, confirming]);
 
   const handleCancel = useCallback(async (reservationId: string, unitId: string) => {
     await cancel(reservationId, unitId);
@@ -276,7 +284,8 @@ export const App: React.FC = () => {
           modal={modal}
           dateRange={dateRangeStr}
           accent={ACCENT}
-          onClose={() => setModal(null)}
+          loading={confirming}
+          onClose={() => !confirming && setModal(null)}
           onConfirm={handleConfirm}
           onQuantityChange={handleQuantityChange}
         />

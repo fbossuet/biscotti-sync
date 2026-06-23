@@ -6,13 +6,14 @@ interface Props {
   modal: ModalState;
   dateRange: string;
   accent: string;
+  loading?: boolean;
   onClose: () => void;
   onConfirm: (quantity: number) => void;
   onQuantityChange: (delta: number) => void;
 }
 
 export const ReservationModal: React.FC<Props> = ({
-  modal, dateRange, accent, onClose, onConfirm, onQuantityChange,
+  modal, dateRange, accent, loading, onClose, onConfirm, onQuantityChange,
 }) => (
   <div style={{
     position: 'fixed', inset: 0, background: 'rgba(28,31,51,.42)',
@@ -25,11 +26,11 @@ export const ReservationModal: React.FC<Props> = ({
       animation: 'scPop .2s ease',
     }} onClick={e => e.stopPropagation()}>
       {modal.step === 'saisie' && (
-        <SaisieStep modal={modal} dateRange={dateRange} accent={accent}
+        <SaisieStep modal={modal} dateRange={dateRange} accent={accent} loading={loading}
           onClose={onClose} onConfirm={onConfirm} onQuantityChange={onQuantityChange} />
       )}
       {modal.step === 'proposition' && (
-        <PropositionStep modal={modal} accent={accent}
+        <PropositionStep modal={modal} accent={accent} loading={loading}
           onClose={onClose} onConfirm={onConfirm} />
       )}
       {modal.step === 'epuise' && (
@@ -40,9 +41,9 @@ export const ReservationModal: React.FC<Props> = ({
 );
 
 const SaisieStep: React.FC<{
-  modal: ModalState; dateRange: string; accent: string;
+  modal: ModalState; dateRange: string; accent: string; loading?: boolean;
   onClose: () => void; onConfirm: (q: number) => void; onQuantityChange: (d: number) => void;
-}> = ({ modal, dateRange, accent, onClose, onConfirm, onQuantityChange }) => (
+}> = ({ modal, dateRange, accent, loading, onClose, onConfirm, onQuantityChange }) => (
   <>
     <div style={{ padding: '22px 24px 6px' }}>
       <div style={{
@@ -89,17 +90,19 @@ const SaisieStep: React.FC<{
         color: colors.text.secondary, borderRadius: 9, padding: '10px 16px',
         fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: fonts.ui,
       }}>Annuler</button>
-      <button onClick={() => onConfirm(modal.requested)} style={{
+      <button onClick={() => !loading && onConfirm(modal.requested)} disabled={loading} style={{
         border: 'none', color: '#fff', borderRadius: 9, padding: '10px 18px',
-        fontSize: 13, fontWeight: 700, cursor: 'pointer', background: accent, fontFamily: fonts.ui,
-      }}>Reserver {modal.requested} unite(s)</button>
+        fontSize: 13, fontWeight: 700, cursor: loading ? 'wait' : 'pointer',
+        background: loading ? '#999' : accent, fontFamily: fonts.ui,
+        opacity: loading ? 0.8 : 1,
+      }}>{loading ? 'Reservation en cours...' : `Reserver ${modal.requested} unite(s)`}</button>
     </div>
   </>
 );
 
 const PropositionStep: React.FC<{
-  modal: ModalState; accent: string; onClose: () => void; onConfirm: (q: number) => void;
-}> = ({ modal, accent, onClose, onConfirm }) => (
+  modal: ModalState; accent: string; loading?: boolean; onClose: () => void; onConfirm: (q: number) => void;
+}> = ({ modal, accent, loading, onClose, onConfirm }) => (
   <>
     <div style={{ padding: '22px 24px 6px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
@@ -123,10 +126,12 @@ const PropositionStep: React.FC<{
         color: colors.text.secondary, borderRadius: 9, padding: '10px 16px',
         fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: fonts.ui,
       }}>Annuler</button>
-      <button onClick={() => onConfirm(modal.proposed)} style={{
+      <button onClick={() => !loading && onConfirm(modal.proposed)} disabled={loading} style={{
         border: 'none', color: '#fff', borderRadius: 9, padding: '10px 18px',
-        fontSize: 13, fontWeight: 700, cursor: 'pointer', background: accent, fontFamily: fonts.ui,
-      }}>Reserver {modal.proposed} unite(s)</button>
+        fontSize: 13, fontWeight: 700, cursor: loading ? 'wait' : 'pointer',
+        background: loading ? '#999' : accent, fontFamily: fonts.ui,
+        opacity: loading ? 0.8 : 1,
+      }}>{loading ? 'Reservation en cours...' : `Reserver ${modal.proposed} unite(s)`}</button>
     </div>
   </>
 );
