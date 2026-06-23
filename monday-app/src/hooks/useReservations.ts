@@ -21,7 +21,7 @@ export function useReservations(config: BoardConfig) {
       const newLines: ReservationLine[] = [];
 
       for (const unit of units) {
-        const columnValues = JSON.stringify({
+        const colVals: Record<string, unknown> = {
           [config.connexionEquipementColumnId]: {
             item_ids: [parseInt(unit.id, 10)],
           },
@@ -29,19 +29,19 @@ export function useReservations(config: BoardConfig) {
             from: dateRange.from,
             to: dateRange.to,
           },
-          [config.connexionDemandeColumnId]: {
-            item_ids: [parseInt(demandItemId, 10)],
-          },
           [config.statutReservationColumnId]: {
             label: 'Pré-réservé',
           },
-        });
+        };
+
+        const columnValues = JSON.stringify(colVals);
+        console.log('[INA Stock] Creating reservation:', columnValues);
 
         const result = await apiCall<{
           create_item: { id: string; name: string };
         }>(CREATE_RESERVATION, {
           boardId: config.reservationsBoardId,
-          itemName: `Résa - ${unit.serial} - ${dateRange.from}`,
+          itemName: `Résa - ${unit.name} - ${dateRange.from}`,
           columnValues,
         });
 

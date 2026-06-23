@@ -115,35 +115,41 @@ export const App: React.FC = () => {
     const line = lines[modal.lineIndex];
     if (!line?.familyId) return;
 
-    const freshAvail = await fetchAvailabilityForFamily(line.familyId, demand.dateRange, config);
+    try {
+      const freshAvail = await fetchAvailabilityForFamily(line.familyId, demand.dateRange, config);
 
-    if (freshAvail.availableCount === 0) {
-      setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
-      return;
+      if (freshAvail.availableCount === 0) {
+        setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
+        return;
+      }
+
+      const remaining = Math.max(0, line.quantite - getReservedCountForLine(modal.lineIndex));
+      if (freshAvail.availableCount < quantity) {
+        setModal(prev => prev ? {
+          ...prev, step: 'proposition',
+          proposed: Math.min(freshAvail.availableCount, remaining),
+          availableCount: freshAvail.availableCount,
+        } : prev);
+        return;
+      }
+
+      await reserve(
+        freshAvail.available,
+        quantity,
+        demand.dateRange,
+        demand.parentId,
+        line.familyName,
+        modal.lineIndex,
+      );
+
+      setModal(null);
+      setToast(`${quantity} unité(s) réservée(s) pour ${line.familyName}`);
+      refresh();
+    } catch (err) {
+      console.error('[INA Stock] Reservation error:', err);
+      setModal(null);
+      setToast(`Erreur: ${err instanceof Error ? err.message : 'Échec de la réservation'}`);
     }
-
-    const remaining = Math.max(0, line.quantite - getReservedCountForLine(modal.lineIndex));
-    if (freshAvail.availableCount < quantity) {
-      setModal(prev => prev ? {
-        ...prev, step: 'proposition',
-        proposed: Math.min(freshAvail.availableCount, remaining),
-        availableCount: freshAvail.availableCount,
-      } : prev);
-      return;
-    }
-
-    await reserve(
-      freshAvail.available,
-      quantity,
-      demand.dateRange,
-      demand.parentId,
-      line.familyName,
-      modal.lineIndex,
-    );
-
-    setModal(null);
-    setToast(`${quantity} unité(s) réservée(s) pour ${line.familyName}`);
-    refresh();
   }, [demand, modal, lines, config, reserve, refresh, getReservedCountForLine]);
 
   const handleCancel = useCallback(async (reservationId: string, unitId: string) => {
