@@ -131,6 +131,17 @@ export async function fetchAvailabilityForFamily(
 
   if (sameModelItems.length === 0) return emptyResult;
 
+  if (sameModelItems[0]) {
+    const sample = sameModelItems[0];
+    const statusCol = sample.column_values.find(c => c.id === config.statutEquipementColumnId);
+    console.log('[INA Stock] Equipment status column:', JSON.stringify({
+      columnId: config.statutEquipementColumnId,
+      text: statusCol?.text,
+      value: statusCol?.value,
+      allCols: sample.column_values.map(c => ({ id: c.id, text: c.text?.slice(0, 30) })),
+    }));
+  }
+
   const equipment = sameModelItems.map(item => parseEquipmentUnit(item, config));
 
   const allReservations: ReservationRecord[] = [];
