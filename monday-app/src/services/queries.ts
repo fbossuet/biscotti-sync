@@ -169,3 +169,45 @@ export const GET_BOARD_ITEMS = `
     }
   }
 `;
+
+export const GET_RESERVATION_BOARD_ITEMS = `
+  query GetReservationBoardItems($boardId: ID!) {
+    boards(ids: [$boardId]) {
+      items_page(limit: 500) {
+        cursor
+        items {
+          id
+          name
+          column_values {
+            id
+            text
+            value
+            ... on BoardRelationValue {
+              linked_item_ids
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_RESERVATION_BOARD_PAGE = `
+  query GetReservationBoardPage($cursor: String!) {
+    next_items_page(limit: 500, cursor: $cursor) {
+      cursor
+      items {
+        id
+        name
+        column_values {
+          id
+          text
+          value
+          ... on BoardRelationValue {
+            linked_item_ids
+          }
+        }
+      }
+    }
+  }
+`;

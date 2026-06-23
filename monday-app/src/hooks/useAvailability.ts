@@ -4,7 +4,8 @@ import {
   GET_CATALOGUE_ITEM_WITH_SUBITEMS,
   GET_BOARD_ITEMS,
   GET_EQUIPMENT_PAGE,
-  GET_RESERVATIONS_FOR_EQUIPMENT,
+  GET_RESERVATION_BOARD_ITEMS,
+  GET_RESERVATION_BOARD_PAGE,
 } from '../services/queries';
 import { computeAvailability, type ReservationRecord } from '../services/availability';
 import type { DateRange, Equipment, AvailabilityResult, BoardConfig, DemandLine } from '../types';
@@ -105,6 +106,29 @@ async function fetchAllBoardItems(boardId: string): Promise<RawItem[]> {
   return allItems;
 }
 
+async function fetchAllReservations(boardId: string): Promise<RawItem[]> {
+  const firstPage = await apiCall<{
+    boards: [{ items_page: { cursor: string | null; items: RawItem[] } }];
+  }>(GET_RESERVATION_BOARD_ITEMS, { boardId });
+
+  const page = firstPage.boards?.[0]?.items_page;
+  if (!page) return [];
+
+  const allItems = [...page.items];
+  let cursor = page.cursor;
+
+  while (cursor) {
+    const nextPage = await apiCall<{
+      next_items_page: { cursor: string | null; items: RawItem[] };
+    }>(GET_RESERVATION_BOARD_PAGE, { cursor });
+
+    allItems.push(...nextPage.next_items_page.items);
+    cursor = nextPage.next_items_page.cursor;
+  }
+
+  return allItems;
+}
+
 export async function fetchAvailabilityForFamily(
   linkedUnitId: string,
   dateRange: DateRange,
@@ -143,23 +167,18 @@ export async function fetchAvailabilityForFamily(
   }
 
   const equipment = sameModelItems.map(item => parseEquipmentUnit(item, config));
+  const equipmentIds = new Set(equipment.map(eq => eq.id));
 
+  const allResItems = await fetchAllReservations(config.reservationsBoardId);
   const allReservations: ReservationRecord[] = [];
-  for (const eq of equipment) {
-    try {
-      const resData = await apiCall<{
-        items_page_by_column_values: { items: RawItem[] };
-      }>(GET_RESERVATIONS_FOR_EQUIPMENT, {
-        boardId: config.reservationsBoardId,
-        columnId: config.connexionEquipementColumnId,
-        equipmentId: eq.id,
-      });
-      for (const item of resData.items_page_by_column_values.items) {
-        const r = parseReservation(item, config);
-        if (r) allReservations.push(r);
-      }
-    } catch { /* no reservations */ }
+  for (const item of allResItems) {
+    const r = parseReservation(item, config);
+    if (r && equipmentIds.has(r.equipmentId)) {
+      allReservations.push(r);
+    }
   }
+
+  console.log('[INA Stock] Reservations found for model:', allReservations.length);
 
   return computeAvailability(equipment, allReservations, dateRange);
 }
