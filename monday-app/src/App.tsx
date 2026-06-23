@@ -4,6 +4,7 @@ import { useMonday } from './hooks/useMonday';
 import { useDemandContext } from './hooks/useDemandContext';
 import { useMultiAvailability, fetchAvailabilityForFamily } from './hooks/useAvailability';
 import { useReservations } from './hooks/useReservations';
+import { useAlternatives } from './hooks/useAlternatives';
 import { DemandContextCard } from './components/DemandContext/DemandContext';
 import { LineCard } from './components/LineCard/LineCard';
 import { ReservationModal } from './components/ReservationModal/ReservationModal';
@@ -60,6 +61,7 @@ export const App: React.FC = () => {
   );
 
   const { lines: resLines, reservedIds, reserve, cancel } = useReservations(config);
+  const { alternatives, loading: altLoading, search: searchAlternatives } = useAlternatives();
 
   const formatDateRange = useCallback(() => {
     if (!demand?.dateRange) return '';
@@ -125,6 +127,7 @@ export const App: React.FC = () => {
 
       if (freshAvail.availableCount === 0) {
         setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
+        searchAlternatives(line.familyName, demand.dateRange, config);
         return;
       }
 
@@ -285,9 +288,24 @@ export const App: React.FC = () => {
           dateRange={dateRangeStr}
           accent={ACCENT}
           loading={confirming}
+          alternatives={alternatives}
+          alternativesLoading={altLoading}
           onClose={() => !confirming && setModal(null)}
           onConfirm={handleConfirm}
           onQuantityChange={handleQuantityChange}
+          onSelectAlternative={(altModelName) => {
+            if (!demand) return;
+            const altItem = alternatives.find(a => a.family.name === altModelName);
+            if (!altItem) return;
+            setModal(prev => prev ? {
+              ...prev,
+              step: 'saisie',
+              targetFamilyId: altItem.family.id,
+              modelName: altModelName,
+              availableCount: altItem.availableCount,
+              requested: Math.min(prev.maxNeeded, altItem.availableCount),
+            } : prev);
+          }}
         />
       )}
 

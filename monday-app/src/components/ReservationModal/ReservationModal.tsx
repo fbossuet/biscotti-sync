@@ -1,19 +1,23 @@
 import React from 'react';
 import { colors, fonts } from '../../constants/design-tokens';
-import type { ModalState } from '../../types';
+import type { ModalState, Alternative } from '../../types';
 
 interface Props {
   modal: ModalState;
   dateRange: string;
   accent: string;
   loading?: boolean;
+  alternatives?: Alternative[];
+  alternativesLoading?: boolean;
   onClose: () => void;
   onConfirm: (quantity: number) => void;
   onQuantityChange: (delta: number) => void;
+  onSelectAlternative?: (modelName: string) => void;
 }
 
 export const ReservationModal: React.FC<Props> = ({
-  modal, dateRange, accent, loading, onClose, onConfirm, onQuantityChange,
+  modal, dateRange, accent, loading, alternatives, alternativesLoading,
+  onClose, onConfirm, onQuantityChange, onSelectAlternative,
 }) => (
   <div style={{
     position: 'fixed', inset: 0, background: 'rgba(28,31,51,.42)',
@@ -23,7 +27,7 @@ export const ReservationModal: React.FC<Props> = ({
     <div style={{
       width: '100%', maxWidth: 420, background: '#fff', borderRadius: 14,
       boxShadow: '0 24px 60px rgba(20,22,45,.32)', overflow: 'hidden',
-      animation: 'scPop .2s ease',
+      animation: 'scPop .2s ease', maxHeight: '80vh', overflowY: 'auto',
     }} onClick={e => e.stopPropagation()}>
       {modal.step === 'saisie' && (
         <SaisieStep modal={modal} dateRange={dateRange} accent={accent} loading={loading}
@@ -34,7 +38,13 @@ export const ReservationModal: React.FC<Props> = ({
           onClose={onClose} onConfirm={onConfirm} />
       )}
       {modal.step === 'epuise' && (
-        <EpuiseStep accent={accent} onClose={onClose} />
+        <EpuiseStep
+          accent={accent}
+          alternatives={alternatives}
+          alternativesLoading={alternativesLoading}
+          onClose={onClose}
+          onSelectAlternative={onSelectAlternative}
+        />
       )}
     </div>
   </div>
@@ -136,7 +146,13 @@ const PropositionStep: React.FC<{
   </>
 );
 
-const EpuiseStep: React.FC<{ accent: string; onClose: () => void }> = ({ accent, onClose }) => (
+const EpuiseStep: React.FC<{
+  accent: string;
+  alternatives?: Alternative[];
+  alternativesLoading?: boolean;
+  onClose: () => void;
+  onSelectAlternative?: (modelName: string) => void;
+}> = ({ accent, alternatives, alternativesLoading, onClose, onSelectAlternative }) => (
   <>
     <div style={{ padding: '22px 24px 6px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
@@ -150,11 +166,66 @@ const EpuiseStep: React.FC<{ accent: string; onClose: () => void }> = ({ accent,
         }}>Plus aucune unite</div>
       </div>
       <div style={{ fontSize: 13.5, color: colors.text.body, lineHeight: 1.55 }}>
-        A la revalidation, plus aucune unite de ce modele n'est disponible sur la periode.
-        Essayez un equivalent dans « Autre materiel disponible ».
+        Plus aucune unite de ce modele n'est disponible sur la periode.
       </div>
     </div>
-    <div style={{ padding: '18px 24px 20px', display: 'flex', justifyContent: 'flex-end' }}>
+
+    <div style={{ padding: '8px 24px 6px' }}>
+      <div style={{
+        fontSize: 12, fontWeight: 700, letterSpacing: '.5px',
+        textTransform: 'uppercase' as const, color: accent, marginBottom: 8,
+      }}>Equivalences disponibles</div>
+
+      {alternativesLoading && (
+        <div style={{ fontSize: 13, color: colors.text.muted, padding: '8px 0' }}>
+          Recherche d'equivalences...
+        </div>
+      )}
+
+      {!alternativesLoading && alternatives && alternatives.length === 0 && (
+        <div style={{ fontSize: 13, color: colors.text.muted, padding: '8px 0' }}>
+          Aucune equivalence disponible dans la meme sous-famille.
+        </div>
+      )}
+
+      {!alternativesLoading && alternatives && alternatives.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {alternatives.map(alt => (
+            <button
+              key={alt.family.id}
+              onClick={() => onSelectAlternative?.(alt.family.name)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 14px', border: `1px solid ${colors.border.default}`,
+                borderRadius: 10, background: '#fff', cursor: 'pointer',
+                fontFamily: fonts.ui, textAlign: 'left' as const,
+                transition: 'border-color .15s',
+              }}
+              onMouseOver={e => (e.currentTarget.style.borderColor = accent)}
+              onMouseOut={e => (e.currentTarget.style.borderColor = colors.border.default)}
+            >
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: colors.text.primary }}>
+                  {alt.family.name}
+                </div>
+                <div style={{ fontSize: 11, color: colors.text.muted, marginTop: 2 }}>
+                  {alt.total} unite(s) au total
+                </div>
+              </div>
+              <div style={{
+                fontSize: 13, fontWeight: 700, color: '#00854d',
+                background: '#e6f9f0', padding: '4px 10px', borderRadius: 8,
+                whiteSpace: 'nowrap' as const,
+              }}>
+                {alt.availableCount} dispo
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div style={{ padding: '16px 24px 20px', display: 'flex', justifyContent: 'flex-end' }}>
       <button onClick={onClose} style={{
         border: 'none', color: '#fff', borderRadius: 9, padding: '10px 18px',
         fontSize: 13, fontWeight: 700, cursor: 'pointer', background: accent, fontFamily: fonts.ui,

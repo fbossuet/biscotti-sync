@@ -1,55 +1,75 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { apiCall } from '../services/monday-api';
-import { GET_FAMILIES_BY_SOUS_FAMILLE, GET_CATALOGUE_ITEM_WITH_SUBITEMS, GET_RESERVATIONS_FOR_EQUIPMENT } from '../services/queries';
+import {
+  GET_BOARD_ITEMS,
+  GET_EQUIPMENT_PAGE,
+  GET_RESERVATION_BOARD_ITEMS,
+  GET_RESERVATION_BOARD_PAGE,
+} from '../services/queries';
 import { computeAvailability, type ReservationRecord } from '../services/availability';
-import type { DateRange, Equipment, Family, Alternative, BoardConfig } from '../types';
+import type { DateRange, Equipment, Alternative, BoardConfig } from '../types';
 
 interface RawItem {
   id: string;
   name: string;
-  column_values: { id: string; text: string; value: string }[];
-  subitems?: RawItem[];
+  column_values: { id: string; text: string; value: string; linked_item_ids?: string[] }[];
 }
 
-function parseFamily(item: RawItem, config: BoardConfig & { sousFamilleColumnId: string; osColumnId: string }): Family {
-  const getCol = (id: string) => item.column_values.find(c => c.id === id)?.text || '';
-  return {
-    id: item.id,
-    name: item.name,
-    sousFamille: getCol(config.sousFamilleColumnId),
-    categorie: '',
-    os: getCol(config.osColumnId),
-    quantiteLS: 0,
-  };
+interface AlternativeConfig extends BoardConfig {
+  sousFamilleColumnId: string;
 }
 
-function parseSubitemEquipment(item: RawItem): Equipment {
+const STATUS_MAP: Record<string, Equipment['status']> = {
+  'en stock': 'disponible',
+  'disponible': 'disponible',
+  'en usage': 'occupe',
+  'occupé': 'occupe',
+  'réservé': 'reserve',
+  'pré-réservé': 'reserve',
+  'en maintenance': 'maintenance',
+  'hors service': 'hors_service',
+  'pas en stock': 'hors_service',
+};
+
+function parseEquipmentUnit(item: RawItem, config: BoardConfig): Equipment {
   const getCol = (id: string) => item.column_values.find(c => c.id === id);
-  const statusCol = getCol('status');
-  const statusText = (statusCol?.text || 'disponible').toLowerCase();
+  const statusText = (getCol(config.statutEquipementColumnId)?.text || '').toLowerCase().trim();
+  const status = STATUS_MAP[statusText] || 'disponible';
+  const reservableCol = getCol(config.reservableColumnId);
+  const reservableVal = reservableCol?.text ? parseInt(reservableCol.text, 10) : 1;
 
   return {
     id: item.id,
     name: item.name,
-    serial: getCol('text_mm41a6ap')?.text || item.name,
-    barcode: getCol('text_mm41kpak')?.text || '',
-    status: statusText as Equipment['status'],
+    serial: item.name,
+    barcode: '',
+    status,
     familyId: '',
-    reservable: true,
+    reservable: reservableVal !== 0,
   };
 }
 
-function parseReservationRecord(item: RawItem, config: BoardConfig): ReservationRecord | null {
+function parseReservation(item: RawItem, config: BoardConfig): ReservationRecord | null {
   const getCol = (id: string) => item.column_values.find(c => c.id === id);
 
   const eqCol = getCol(config.connexionEquipementColumnId);
   let equipmentId = '';
-  if (eqCol?.value) {
-    try {
-      const parsed = JSON.parse(eqCol.value);
-      const ids = parsed.linkedPulseIds || parsed.linked_pulse_ids || [];
-      if (ids.length > 0) equipmentId = String(ids[0].linkedPulseId || ids[0].linked_pulse_id);
-    } catch { /* ignore */ }
+  if (eqCol) {
+    if (Array.isArray(eqCol.linked_item_ids) && eqCol.linked_item_ids.length > 0) {
+      equipmentId = String(eqCol.linked_item_ids[0]);
+    }
+    if (!equipmentId && eqCol.value) {
+      try {
+        const parsed = JSON.parse(eqCol.value);
+        const ids = parsed.linkedPulseIds || parsed.linked_pulse_ids;
+        if (Array.isArray(ids) && ids.length > 0) {
+          equipmentId = String(ids[0].linkedPulseId || ids[0].linked_pulse_id);
+        }
+        if (!equipmentId && Array.isArray(parsed.linked_item_ids)) {
+          equipmentId = String(parsed.linked_item_ids[0] || '');
+        }
+      } catch { /* ignore */ }
+    }
   }
 
   const dateCol = getCol(config.plageReservationColumnId);
@@ -66,86 +86,137 @@ function parseReservationRecord(item: RawItem, config: BoardConfig): Reservation
   return { equipmentId, dateFrom, dateTo, status: statusCol?.text || 'pre_reserve' };
 }
 
-export function useAlternatives(
-  currentFamilyId: string | null,
-  sousFamille: string | null,
-  dateRange: DateRange | null,
-  config: BoardConfig & { sousFamilleColumnId: string; osColumnId: string },
-) {
+async function fetchAllBoardItems(boardId: string): Promise<RawItem[]> {
+  const firstPage = await apiCall<{
+    boards: [{ items_page: { cursor: string | null; items: RawItem[] } }];
+  }>(GET_BOARD_ITEMS, { boardId });
+
+  const page = firstPage.boards?.[0]?.items_page;
+  if (!page) return [];
+
+  const allItems = [...page.items];
+  let cursor = page.cursor;
+
+  while (cursor) {
+    const nextPage = await apiCall<{
+      next_items_page: { cursor: string | null; items: RawItem[] };
+    }>(GET_EQUIPMENT_PAGE, { cursor });
+    allItems.push(...nextPage.next_items_page.items);
+    cursor = nextPage.next_items_page.cursor;
+  }
+
+  return allItems;
+}
+
+async function fetchAllReservations(boardId: string): Promise<RawItem[]> {
+  const firstPage = await apiCall<{
+    boards: [{ items_page: { cursor: string | null; items: RawItem[] } }];
+  }>(GET_RESERVATION_BOARD_ITEMS, { boardId });
+
+  const page = firstPage.boards?.[0]?.items_page;
+  if (!page) return [];
+
+  const allItems = [...page.items];
+  let cursor = page.cursor;
+
+  while (cursor) {
+    const nextPage = await apiCall<{
+      next_items_page: { cursor: string | null; items: RawItem[] };
+    }>(GET_RESERVATION_BOARD_PAGE, { cursor });
+    allItems.push(...nextPage.next_items_page.items);
+    cursor = nextPage.next_items_page.cursor;
+  }
+
+  return allItems;
+}
+
+export async function fetchAlternatives(
+  currentModelName: string,
+  dateRange: DateRange,
+  config: AlternativeConfig,
+): Promise<Alternative[]> {
+  const allItems = await fetchAllBoardItems(config.equipementsBoardId);
+
+  const currentItem = allItems.find(item => item.name === currentModelName);
+  if (!currentItem) return [];
+
+  const sousFamilleCol = currentItem.column_values.find(c => c.id === config.sousFamilleColumnId);
+  const sousFamille = sousFamilleCol?.text || '';
+  if (!sousFamille) return [];
+
+  console.log('[INA Stock] Looking for alternatives in sous-famille:', sousFamille);
+
+  const modelGroups = new Map<string, RawItem[]>();
+  for (const item of allItems) {
+    const sf = item.column_values.find(c => c.id === config.sousFamilleColumnId)?.text || '';
+    if (sf === sousFamille && item.name !== currentModelName) {
+      const group = modelGroups.get(item.name) || [];
+      group.push(item);
+      modelGroups.set(item.name, group);
+    }
+  }
+
+  console.log('[INA Stock] Found', modelGroups.size, 'alternative models');
+  if (modelGroups.size === 0) return [];
+
+  const allResItems = await fetchAllReservations(config.reservationsBoardId);
+
+  const results: Alternative[] = [];
+
+  for (const [modelName, items] of modelGroups) {
+    const equipment = items.map(item => parseEquipmentUnit(item, config));
+    const equipmentIds = new Set(equipment.map(eq => eq.id));
+
+    const reservations: ReservationRecord[] = [];
+    for (const resItem of allResItems) {
+      const r = parseReservation(resItem, config);
+      if (r && equipmentIds.has(r.equipmentId)) {
+        reservations.push(r);
+      }
+    }
+
+    const avail = computeAvailability(equipment, reservations, dateRange);
+
+    if (avail.availableCount > 0) {
+      results.push({
+        family: {
+          id: items[0].id,
+          name: modelName,
+          sousFamille,
+          categorie: '',
+          os: '',
+          quantiteLS: avail.total,
+        },
+        availableCount: avail.availableCount,
+        total: avail.total,
+      });
+    }
+  }
+
+  results.sort((a, b) => b.availableCount - a.availableCount);
+  return results;
+}
+
+export function useAlternatives() {
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const refresh = useCallback(async () => {
-    if (!currentFamilyId || !sousFamille || !dateRange) return;
-
+  const search = useCallback(async (
+    currentModelName: string,
+    dateRange: DateRange,
+    config: AlternativeConfig,
+  ) => {
     setLoading(true);
+    setAlternatives([]);
     try {
-      const famData = await apiCall<{
-        items_page_by_column_values: { items: RawItem[] };
-      }>(GET_FAMILIES_BY_SOUS_FAMILLE, {
-        boardId: config.famillesBoardId,
-        columnId: config.sousFamilleColumnId,
-        sousFamille,
-      });
-
-      const families = famData.items_page_by_column_values.items
-        .map(i => parseFamily(i, config))
-        .filter(f => f.id !== currentFamilyId);
-
-      const results: Alternative[] = [];
-
-      for (const family of families) {
-        try {
-          const catalogueData = await apiCall<{ items: RawItem[] }>(
-            GET_CATALOGUE_ITEM_WITH_SUBITEMS,
-            { itemId: [family.id] },
-          );
-
-          const catalogueItem = catalogueData.items?.[0];
-          if (!catalogueItem?.subitems?.length) {
-            results.push({ family, availableCount: 0, total: 0 });
-            continue;
-          }
-
-          const equipment = catalogueItem.subitems.map(parseSubitemEquipment);
-
-          const allReservations: ReservationRecord[] = [];
-          for (const eq of equipment) {
-            try {
-              const resData = await apiCall<{
-                items_page_by_column_values: { items: RawItem[] };
-              }>(GET_RESERVATIONS_FOR_EQUIPMENT, {
-                boardId: config.reservationsBoardId,
-                columnId: config.connexionEquipementColumnId,
-                equipmentId: eq.id,
-              });
-              for (const item of resData.items_page_by_column_values.items) {
-                const r = parseReservationRecord(item, config);
-                if (r) allReservations.push(r);
-              }
-            } catch { /* no reservations */ }
-          }
-
-          const avail = computeAvailability(equipment, allReservations, dateRange);
-          results.push({
-            family,
-            availableCount: avail.availableCount,
-            total: avail.total,
-          });
-        } catch { /* skip this family */ }
-      }
-
+      const results = await fetchAlternatives(currentModelName, dateRange, config);
       setAlternatives(results);
     } catch (err) {
-      console.error('Alternatives fetch error:', err);
+      console.error('[INA Stock] Alternatives fetch error:', err);
     } finally {
       setLoading(false);
     }
-  }, [currentFamilyId, sousFamille, dateRange, config]);
+  }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  return { alternatives, loading, refresh };
+  return { alternatives, loading, search };
 }
