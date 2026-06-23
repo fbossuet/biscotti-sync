@@ -1,29 +1,47 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiCall } from '../services/monday-api';
-import { GET_CATALOGUE_ITEM_WITH_SUBITEMS, GET_RESERVATIONS_FOR_EQUIPMENT } from '../services/queries';
+import {
+  GET_CATALOGUE_ITEM_WITH_SUBITEMS,
+  GET_BOARD_ITEMS,
+  GET_EQUIPMENT_PAGE,
+  GET_RESERVATIONS_FOR_EQUIPMENT,
+} from '../services/queries';
 import { computeAvailability, type ReservationRecord } from '../services/availability';
 import type { DateRange, Equipment, AvailabilityResult, BoardConfig, DemandLine } from '../types';
 
 interface RawItem {
   id: string;
   name: string;
-  column_values: { id: string; text: string; value: string }[];
-  subitems?: RawItem[];
+  column_values: { id: string; text: string; value: string; linked_item_ids?: string[] }[];
 }
 
-function parseSubitemEquipment(item: RawItem): Equipment {
+const STATUS_MAP: Record<string, Equipment['status']> = {
+  'en stock': 'disponible',
+  'disponible': 'disponible',
+  'en usage': 'occupe',
+  'occupé': 'occupe',
+  'réservé': 'reserve',
+  'pré-réservé': 'reserve',
+  'en maintenance': 'maintenance',
+  'hors service': 'hors_service',
+  'pas en stock': 'hors_service',
+};
+
+function parseEquipmentUnit(item: RawItem, config: BoardConfig): Equipment {
   const getCol = (id: string) => item.column_values.find(c => c.id === id);
-  const statusCol = getCol('status');
-  const statusText = (statusCol?.text || 'disponible').toLowerCase();
+  const statusText = (getCol(config.statutEquipementColumnId)?.text || '').toLowerCase().trim();
+  const status = STATUS_MAP[statusText] || 'disponible';
+  const reservableCol = getCol(config.reservableColumnId);
+  const reservableVal = reservableCol?.text ? parseInt(reservableCol.text, 10) : 1;
 
   return {
     id: item.id,
     name: item.name,
-    serial: getCol('text_mm41a6ap')?.text || item.name,
-    barcode: getCol('text_mm41kpak')?.text || '',
-    status: statusText as Equipment['status'],
+    serial: item.name,
+    barcode: '',
+    status,
     familyId: '',
-    reservable: true,
+    reservable: reservableVal !== 0,
   };
 }
 
@@ -32,17 +50,22 @@ function parseReservation(item: RawItem, config: BoardConfig): ReservationRecord
 
   const eqCol = getCol(config.connexionEquipementColumnId);
   let equipmentId = '';
-  if (eqCol?.value) {
-    try {
-      const parsed = JSON.parse(eqCol.value);
-      const ids = parsed.linkedPulseIds || parsed.linked_pulse_ids;
-      if (Array.isArray(ids) && ids.length > 0) {
-        equipmentId = String(ids[0].linkedPulseId || ids[0].linked_pulse_id);
-      }
-      if (!equipmentId && Array.isArray(parsed.linked_item_ids)) {
-        equipmentId = String(parsed.linked_item_ids[0] || '');
-      }
-    } catch { /* ignore */ }
+  if (eqCol) {
+    if (Array.isArray(eqCol.linked_item_ids) && eqCol.linked_item_ids.length > 0) {
+      equipmentId = String(eqCol.linked_item_ids[0]);
+    }
+    if (!equipmentId && eqCol.value) {
+      try {
+        const parsed = JSON.parse(eqCol.value);
+        const ids = parsed.linkedPulseIds || parsed.linked_pulse_ids;
+        if (Array.isArray(ids) && ids.length > 0) {
+          equipmentId = String(ids[0].linkedPulseId || ids[0].linked_pulse_id);
+        }
+        if (!equipmentId && Array.isArray(parsed.linked_item_ids)) {
+          equipmentId = String(parsed.linked_item_ids[0] || '');
+        }
+      } catch { /* ignore */ }
+    }
   }
 
   const dateCol = getCol(config.plageReservationColumnId);
@@ -59,25 +82,56 @@ function parseReservation(item: RawItem, config: BoardConfig): ReservationRecord
   return { equipmentId, dateFrom, dateTo, status: statusCol?.text || 'pre_reserve' };
 }
 
+async function fetchAllBoardItems(boardId: string): Promise<RawItem[]> {
+  const firstPage = await apiCall<{
+    boards: [{ items_page: { cursor: string | null; items: RawItem[] } }];
+  }>(GET_BOARD_ITEMS, { boardId });
+
+  const page = firstPage.boards?.[0]?.items_page;
+  if (!page) return [];
+
+  const allItems = [...page.items];
+  let cursor = page.cursor;
+
+  while (cursor) {
+    const nextPage = await apiCall<{
+      next_items_page: { cursor: string | null; items: RawItem[] };
+    }>(GET_EQUIPMENT_PAGE, { cursor });
+
+    allItems.push(...nextPage.next_items_page.items);
+    cursor = nextPage.next_items_page.cursor;
+  }
+
+  return allItems;
+}
+
 export async function fetchAvailabilityForFamily(
-  familyId: string,
+  linkedUnitId: string,
   dateRange: DateRange,
   config: BoardConfig,
 ): Promise<AvailabilityResult> {
-  const catalogueData = await apiCall<{ items: RawItem[] }>(
+  const emptyResult: AvailabilityResult = {
+    available: [], reserved: [], maintenance: [],
+    total: 0, availableCount: 0, reservedCount: 0, maintenanceCount: 0,
+  };
+
+  const unitData = await apiCall<{ items: RawItem[] }>(
     GET_CATALOGUE_ITEM_WITH_SUBITEMS,
-    { itemId: [familyId] },
+    { itemId: [linkedUnitId] },
   );
+  const linkedUnit = unitData.items?.[0];
+  if (!linkedUnit) return emptyResult;
 
-  const catalogueItem = catalogueData.items?.[0];
-  if (!catalogueItem?.subitems?.length) {
-    return {
-      available: [], reserved: [], maintenance: [],
-      total: 0, availableCount: 0, reservedCount: 0, maintenanceCount: 0,
-    };
-  }
+  const modelName = linkedUnit.name;
+  console.log('[INA Stock] Linked unit:', linkedUnitId, '→ model:', modelName);
 
-  const equipment = catalogueItem.subitems.map(parseSubitemEquipment);
+  const allItems = await fetchAllBoardItems(config.equipementsBoardId);
+  const sameModelItems = allItems.filter(item => item.name === modelName);
+  console.log('[INA Stock] Found', sameModelItems.length, 'units of model:', modelName);
+
+  if (sameModelItems.length === 0) return emptyResult;
+
+  const equipment = sameModelItems.map(item => parseEquipmentUnit(item, config));
 
   const allReservations: ReservationRecord[] = [];
   for (const eq of equipment) {

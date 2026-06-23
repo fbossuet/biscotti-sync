@@ -18,7 +18,7 @@ interface AppConfig extends BoardConfig {
 
 const DEFAULT_CONFIG: AppConfig = {
   famillesBoardId: '5098193893',
-  equipementsBoardId: '5094410740',
+  equipementsBoardId: '5098193893',
   reservationsBoardId: '5098977881',
   dateFormationColumnId: 'timerange_mm398xxz',
   quantiteColumnId: 'numeric_mm293wap',

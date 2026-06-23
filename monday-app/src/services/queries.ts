@@ -69,8 +69,8 @@ export const GET_EQUIPMENT_BY_FAMILY = `
 `;
 
 export const GET_EQUIPMENT_PAGE = `
-  query GetEquipmentPage($boardId: ID!, $cursor: String!) {
-    next_items_page(board_id: $boardId, limit: 500, cursor: $cursor) {
+  query GetEquipmentPage($cursor: String!) {
+    next_items_page(limit: 500, cursor: $cursor) {
       cursor
       items {
         id
@@ -78,7 +78,6 @@ export const GET_EQUIPMENT_PAGE = `
         column_values {
           id
           text
-          value
         }
       }
     }
@@ -100,6 +99,9 @@ export const GET_RESERVATIONS_FOR_EQUIPMENT = `
           id
           text
           value
+          ... on BoardRelationValue {
+            linked_item_ids
+          }
         }
       }
     }
@@ -161,7 +163,6 @@ export const GET_BOARD_ITEMS = `
           column_values {
             id
             text
-            value
           }
         }
       }
