@@ -29,9 +29,6 @@ export function useReservations(config: BoardConfig) {
             from: dateRange.from,
             to: dateRange.to,
           },
-          [config.statutReservationColumnId]: {
-            label: 'Pré-réservé',
-          },
         };
 
         const columnValues = JSON.stringify(colVals);
