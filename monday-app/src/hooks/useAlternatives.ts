@@ -5,6 +5,7 @@ import {
   GET_EQUIPMENT_PAGE,
   GET_RESERVATION_BOARD_ITEMS,
   GET_RESERVATION_BOARD_PAGE,
+  GET_CATALOGUE_ITEM_WITH_SUBITEMS,
 } from '../services/queries';
 import { computeAvailability, type ReservationRecord } from '../services/availability';
 import type { DateRange, Equipment, Alternative, BoardConfig } from '../types';
@@ -136,36 +137,27 @@ export async function fetchAlternatives(
   config: AlternativeConfig,
   familyId?: string,
 ): Promise<Alternative[]> {
-  const allItems = await fetchAllBoardItems(config.equipementsBoardId);
-  console.log('[INA Stock] Alternatives: fetched', allItems.length, 'items from board', config.equipementsBoardId);
-  console.log('[INA Stock] Alternatives: currentModelName=', currentModelName, 'familyId=', familyId);
-
   let resolvedModelName = currentModelName;
   if (familyId) {
-    const linkedUnit = allItems.find(item => item.id === familyId);
-    console.log('[INA Stock] Alternatives: linkedUnit by id=', linkedUnit?.id, linkedUnit?.name);
-    if (!linkedUnit) {
-      console.log('[INA Stock] Alternatives: IDs in board (first 10):', allItems.slice(0, 10).map(i => i.id));
-    }
+    const unitData = await apiCall<{ items: RawItem[] }>(
+      GET_CATALOGUE_ITEM_WITH_SUBITEMS,
+      { itemId: [familyId] },
+    );
+    const linkedUnit = unitData.items?.[0];
     if (linkedUnit) {
       resolvedModelName = linkedUnit.name;
     }
   }
   console.log('[INA Stock] Alternatives: resolvedModelName=', resolvedModelName);
 
+  const allItems = await fetchAllBoardItems(config.equipementsBoardId);
+
   const currentItem = allItems.find(item => item.name === resolvedModelName);
-  if (!currentItem) {
-    console.log('[INA Stock] Alternatives: NO item found with name', resolvedModelName);
-    return [];
-  }
+  if (!currentItem) return [];
 
   const sousFamilleCol = currentItem.column_values.find(c => c.id === config.sousFamilleColumnId);
   const sousFamille = sousFamilleCol?.text || '';
-  console.log('[INA Stock] Alternatives: sousFamilleColumnId=', config.sousFamilleColumnId, 'sousFamille=', sousFamille);
-  if (!sousFamille) {
-    console.log('[INA Stock] Alternatives: sous-famille is EMPTY, columns:', currentItem.column_values.map(c => ({ id: c.id, text: c.text })));
-    return [];
-  }
+  if (!sousFamille) return [];
 
   console.log('[INA Stock] Looking for alternatives in sous-famille:', sousFamille);
 
