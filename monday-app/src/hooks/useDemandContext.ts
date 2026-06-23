@@ -128,9 +128,10 @@ export function useDemandContext(
 
         console.log('[INA Stock] Found', subitems.length, 'sub-items');
         if (subitems[0]) {
-          console.log('[INA Stock] First sub-item columns:', subitems[0].column_values.map(c => ({
-            id: c.id, text: c.text, value: c.value?.slice(0, 100),
-          })));
+          const cols = subitems[0].column_values;
+          const catalogueCol = cols.find(c => c.id === config.connexionCatalogueColumnId);
+          console.log('[INA Stock] CATALOGUE COLUMN RAW:', JSON.stringify(catalogueCol));
+          console.log('[INA Stock] ALL SUB-ITEM COLS:', JSON.stringify(cols.map(c => c.id + '=' + (c.value || '(null)').slice(0, 80))));
         }
 
         const formationNameCol = findColumn(item.column_values, 'text_mm295wsj');
