@@ -134,10 +134,19 @@ export async function fetchAlternatives(
   currentModelName: string,
   dateRange: DateRange,
   config: AlternativeConfig,
+  familyId?: string,
 ): Promise<Alternative[]> {
   const allItems = await fetchAllBoardItems(config.equipementsBoardId);
 
-  const currentItem = allItems.find(item => item.name === currentModelName);
+  let resolvedModelName = currentModelName;
+  if (familyId) {
+    const linkedUnit = allItems.find(item => item.id === familyId);
+    if (linkedUnit) {
+      resolvedModelName = linkedUnit.name;
+    }
+  }
+
+  const currentItem = allItems.find(item => item.name === resolvedModelName);
   if (!currentItem) return [];
 
   const sousFamilleCol = currentItem.column_values.find(c => c.id === config.sousFamilleColumnId);
@@ -149,7 +158,7 @@ export async function fetchAlternatives(
   const modelGroups = new Map<string, RawItem[]>();
   for (const item of allItems) {
     const sf = item.column_values.find(c => c.id === config.sousFamilleColumnId)?.text || '';
-    if (sf === sousFamille && item.name !== currentModelName) {
+    if (sf === sousFamille && item.name !== resolvedModelName) {
       const group = modelGroups.get(item.name) || [];
       group.push(item);
       modelGroups.set(item.name, group);
@@ -205,11 +214,12 @@ export function useAlternatives() {
     currentModelName: string,
     dateRange: DateRange,
     config: AlternativeConfig,
+    familyId?: string,
   ) => {
     setLoading(true);
     setAlternatives([]);
     try {
-      const results = await fetchAlternatives(currentModelName, dateRange, config);
+      const results = await fetchAlternatives(currentModelName, dateRange, config, familyId);
       setAlternatives(results);
     } catch (err) {
       console.error('[INA Stock] Alternatives fetch error:', err);

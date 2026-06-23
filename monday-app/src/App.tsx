@@ -102,7 +102,7 @@ export const App: React.FC = () => {
         maxNeeded,
         proposed: 0,
       });
-      searchAlternatives(line.familyName, demand.dateRange, config);
+      searchAlternatives(line.familyName, demand.dateRange, config, line.familyId!);
       return;
     }
 
@@ -142,7 +142,7 @@ export const App: React.FC = () => {
 
       if (freshAvail.availableCount === 0) {
         setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
-        searchAlternatives(line.familyName, demand.dateRange, config);
+        searchAlternatives(line.familyName, demand.dateRange, config, line.familyId!);
         return;
       }
 
