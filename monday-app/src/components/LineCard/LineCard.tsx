@@ -142,25 +142,6 @@ export const LineCard: React.FC<Props> = ({
             <div style={{ background: '#c4c7d4', flex: availability.maintenanceCount, transition: 'flex .3s' }} />
           </div>
 
-          {/* Unit chips */}
-          <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
-            {[...availability.available, ...availability.reserved, ...availability.maintenance].map(u => {
-              const isAvail = availability.available.includes(u);
-              const isMaint = availability.maintenance.includes(u);
-              const dot = isAvail ? '#00c875' : isMaint ? '#c4c7d4' : '#fdab3d';
-              return (
-                <span key={u.id} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  border: `1px solid ${colors.border.default}`, borderRadius: 6,
-                  padding: '4px 8px', fontSize: 11, background: '#fbfbfd',
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: 99, background: dot }} />
-                  <span style={{ fontFamily: fonts.mono, color: colors.text.body, fontWeight: 500 }}>{u.serial}</span>
-                </span>
-              );
-            })}
-          </div>
-
           {/* Coverage info */}
           {!covered && remaining > 0 && (
             <div style={{
