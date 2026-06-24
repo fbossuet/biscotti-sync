@@ -92,6 +92,7 @@ export function useDemandContext(
     dateFormationColumnId: string;
     quantiteColumnId: string;
     connexionCatalogueColumnId: string;
+    formationNameColumnId: string;
   },
 ) {
   const [demand, setDemand] = useState<DemandOverview | null>(null);
@@ -112,10 +113,6 @@ export function useDemandContext(
           return;
         }
 
-        console.log('[INA Stock] Demand columns:', item.column_values.map(c => ({
-          id: c.id, text: c.text, value: c.value?.slice(0, 100),
-        })));
-
         const dateRange = parseDateRange(
           findColumn(item.column_values, config.dateFormationColumnId),
         );
@@ -130,19 +127,7 @@ export function useDemandContext(
           return;
         }
 
-        console.log('[INA Stock] Found', subitems.length, 'sub-items');
-        if (subitems[0]) {
-          const cols = subitems[0].column_values;
-          const catalogueCol = cols.find(c => c.id === config.connexionCatalogueColumnId);
-          console.log('[INA Stock] CATALOGUE COLUMN RAW:', JSON.stringify({
-            id: catalogueCol?.id,
-            text: catalogueCol?.text,
-            value: catalogueCol?.value,
-            linked_item_ids: (catalogueCol as any)?.linked_item_ids,
-          }));
-        }
-
-        const formationNameCol = findColumn(item.column_values, 'text_mm295wsj');
+        const formationNameCol = findColumn(item.column_values, config.formationNameColumnId);
 
         const lines = subitems.map(si =>
           parseDemandLine(si, config.connexionCatalogueColumnId, config.quantiteColumnId),
@@ -157,7 +142,6 @@ export function useDemandContext(
         });
       })
       .catch(err => {
-        console.error('[INA Stock] Demand fetch error:', err);
         setError(err.message || 'Erreur lors du chargement de la demande.');
       })
       .finally(() => setLoading(false));

@@ -31,6 +31,7 @@ const DEFAULT_CONFIG: AppConfig = {
   statutReservationColumnId: 'status',
   connexionEquipementColumnId: 'board_relation_mm4j1ene',
   connexionDemandeColumnId: 'board_relation_mm4jaj64',
+  formationNameColumnId: 'text_mm295wsj',
   sousFamilleColumnId: 'color_mm3x282f',
   osColumnId: 'color_mm29yn1b',
 };
@@ -41,7 +42,7 @@ export const App: React.FC = () => {
   const { context, loading: ctxLoading } = useMonday();
   const [config] = useState<AppConfig>(DEFAULT_CONFIG);
   const [modal, setModal] = useState<ModalState | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   const itemId = context?.itemId ?? null;
@@ -50,6 +51,7 @@ export const App: React.FC = () => {
     dateFormationColumnId: config.dateFormationColumnId,
     quantiteColumnId: config.quantiteColumnId,
     connexionCatalogueColumnId: config.connexionCatalogueColumnId,
+    formationNameColumnId: config.formationNameColumnId,
   });
 
   const lines = demand?.lines ?? [];
@@ -60,7 +62,7 @@ export const App: React.FC = () => {
     config,
   );
 
-  const { lines: resLines, reservedIds, reserve, cancel } = useReservations(config);
+  const { lines: resLines, reservedIds, reserve, cancel } = useReservations(config, lines);
   const { alternatives, loading: altLoading, search: searchAlternatives } = useAlternatives();
 
   const formatDateRange = useCallback(() => {
@@ -137,11 +139,9 @@ export const App: React.FC = () => {
     const targetModelName = modal.modelName;
 
     setConfirming(true);
-    console.log('[INA Stock] handleConfirm started, quantity:', quantity, 'target:', targetModelName);
 
     try {
       const freshAvail = await fetchAvailabilityForFamily(targetFamilyId, demand.dateRange, config);
-      console.log('[INA Stock] Fresh availability:', freshAvail.availableCount, 'available');
 
       if (freshAvail.availableCount === 0) {
         setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
@@ -159,7 +159,6 @@ export const App: React.FC = () => {
         return;
       }
 
-      console.log('[INA Stock] Calling reserve with', quantity, 'units');
       const created = await reserve(
         freshAvail.available,
         quantity,
@@ -180,11 +179,11 @@ export const App: React.FC = () => {
         const kept = created.length - conflicts.length;
         if (kept > 0) {
           setModal(null);
-          setToast(`${kept} unité(s) réservée(s) pour ${targetModelName} — ${conflicts.length} annulée(s) (conflit avec un autre utilisateur)`);
+          setToast({ message: `${kept} unité(s) réservée(s) pour ${targetModelName} — ${conflicts.length} annulée(s) (conflit avec un autre utilisateur)`, variant: 'error' });
         } else {
           setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
           searchAlternatives(targetModelName, demand.dateRange, config, targetFamilyId);
-          setToast(`Conflit : les unités ont été réservées par un autre utilisateur`);
+          setToast({ message: `Conflit : les unités ont été réservées par un autre utilisateur`, variant: 'error' });
         }
         refresh();
         return;
@@ -193,16 +192,15 @@ export const App: React.FC = () => {
       const newReserved = getReservedCountForLine(modal.lineIndex) + quantity;
       if (newReserved >= line.quantite) {
         setModal(null);
-        setToast(`Besoin couvert ! ${quantity} unité(s) réservée(s) pour ${targetModelName}`);
+        setToast({ message: `Besoin couvert ! ${quantity} unité(s) réservée(s) pour ${targetModelName}`, variant: 'success' });
       } else {
         setModal(null);
-        setToast(`${quantity} unité(s) réservée(s) pour ${targetModelName} — il reste ${line.quantite - newReserved} unité(s) à couvrir`);
+        setToast({ message: `${quantity} unité(s) réservée(s) pour ${targetModelName} — il reste ${line.quantite - newReserved} unité(s) à couvrir`, variant: 'success' });
       }
       refresh();
     } catch (err) {
-      console.error('[INA Stock] Reservation error:', err);
       setModal(null);
-      setToast(`Erreur: ${err instanceof Error ? err.message : 'Échec de la réservation'}`);
+      setToast({ message: `Erreur: ${err instanceof Error ? err.message : 'Échec de la réservation'}`, variant: 'error' });
     } finally {
       setConfirming(false);
     }
@@ -210,7 +208,7 @@ export const App: React.FC = () => {
 
   const handleCancel = useCallback(async (reservationId: string, unitId: string) => {
     await cancel(reservationId, unitId);
-    setToast('Réservation annulée');
+    setToast({ message: 'Réservation annulée', variant: 'success' });
     refresh();
   }, [cancel, refresh]);
 
@@ -354,7 +352,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      {toast && <Toast message={toast.message} variant={toast.variant} onClose={() => setToast(null)} />}
     </div>
   );
 };

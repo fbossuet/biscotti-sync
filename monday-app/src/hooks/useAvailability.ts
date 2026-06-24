@@ -1,133 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiCall } from '../services/monday-api';
-import {
-  GET_CATALOGUE_ITEM_WITH_SUBITEMS,
-  GET_BOARD_ITEMS,
-  GET_EQUIPMENT_PAGE,
-  GET_RESERVATION_BOARD_ITEMS,
-  GET_RESERVATION_BOARD_PAGE,
-} from '../services/queries';
+import { GET_CATALOGUE_ITEM_WITH_SUBITEMS } from '../services/queries';
 import { computeAvailability, type ReservationRecord } from '../services/availability';
-import type { DateRange, Equipment, AvailabilityResult, BoardConfig, DemandLine } from '../types';
-
-interface RawItem {
-  id: string;
-  name: string;
-  column_values: { id: string; text: string; value: string; linked_item_ids?: string[] }[];
-}
-
-const STATUS_MAP: Record<string, Equipment['status']> = {
-  'en stock': 'disponible',
-  'disponible': 'disponible',
-  'en usage': 'occupe',
-  'occupé': 'occupe',
-  'réservé': 'reserve',
-  'pré-réservé': 'reserve',
-  'en maintenance': 'maintenance',
-  'hors service': 'hors_service',
-  'pas en stock': 'hors_service',
-};
-
-function parseEquipmentUnit(item: RawItem, config: BoardConfig): Equipment {
-  const getCol = (id: string) => item.column_values.find(c => c.id === id);
-  const statusText = (getCol(config.statutEquipementColumnId)?.text || '').toLowerCase().trim();
-  const status = STATUS_MAP[statusText] || 'disponible';
-  const reservableCol = getCol(config.reservableColumnId);
-  const reservableVal = reservableCol?.text ? parseInt(reservableCol.text, 10) : 1;
-
-  return {
-    id: item.id,
-    name: item.name,
-    serial: item.name,
-    barcode: '',
-    status,
-    familyId: '',
-    reservable: reservableVal !== 0,
-  };
-}
-
-function parseReservation(item: RawItem, config: BoardConfig): ReservationRecord | null {
-  const getCol = (id: string) => item.column_values.find(c => c.id === id);
-
-  const eqCol = getCol(config.connexionEquipementColumnId);
-  let equipmentId = '';
-  if (eqCol) {
-    if (Array.isArray(eqCol.linked_item_ids) && eqCol.linked_item_ids.length > 0) {
-      equipmentId = String(eqCol.linked_item_ids[0]);
-    }
-    if (!equipmentId && eqCol.value) {
-      try {
-        const parsed = JSON.parse(eqCol.value);
-        const ids = parsed.linkedPulseIds || parsed.linked_pulse_ids;
-        if (Array.isArray(ids) && ids.length > 0) {
-          equipmentId = String(ids[0].linkedPulseId || ids[0].linked_pulse_id);
-        }
-        if (!equipmentId && Array.isArray(parsed.linked_item_ids)) {
-          equipmentId = String(parsed.linked_item_ids[0] || '');
-        }
-      } catch { /* ignore */ }
-    }
-  }
-
-  const dateCol = getCol(config.plageReservationColumnId);
-  if (!dateCol?.value) return null;
-  let dateFrom = '', dateTo = '';
-  try {
-    const parsed = JSON.parse(dateCol.value);
-    dateFrom = parsed.from || '';
-    dateTo = parsed.to || '';
-  } catch { /* ignore */ }
-  if (!dateFrom || !dateTo) return null;
-
-  const statusCol = getCol(config.statutReservationColumnId);
-  return { equipmentId, dateFrom, dateTo, status: statusCol?.text || 'pre_reserve' };
-}
-
-async function fetchAllBoardItems(boardId: string): Promise<RawItem[]> {
-  const firstPage = await apiCall<{
-    boards: [{ items_page: { cursor: string | null; items: RawItem[] } }];
-  }>(GET_BOARD_ITEMS, { boardId });
-
-  const page = firstPage.boards?.[0]?.items_page;
-  if (!page) return [];
-
-  const allItems = [...page.items];
-  let cursor = page.cursor;
-
-  while (cursor) {
-    const nextPage = await apiCall<{
-      next_items_page: { cursor: string | null; items: RawItem[] };
-    }>(GET_EQUIPMENT_PAGE, { cursor });
-
-    allItems.push(...nextPage.next_items_page.items);
-    cursor = nextPage.next_items_page.cursor;
-  }
-
-  return allItems;
-}
-
-async function fetchAllReservations(boardId: string): Promise<RawItem[]> {
-  const firstPage = await apiCall<{
-    boards: [{ items_page: { cursor: string | null; items: RawItem[] } }];
-  }>(GET_RESERVATION_BOARD_ITEMS, { boardId });
-
-  const page = firstPage.boards?.[0]?.items_page;
-  if (!page) return [];
-
-  const allItems = [...page.items];
-  let cursor = page.cursor;
-
-  while (cursor) {
-    const nextPage = await apiCall<{
-      next_items_page: { cursor: string | null; items: RawItem[] };
-    }>(GET_RESERVATION_BOARD_PAGE, { cursor });
-
-    allItems.push(...nextPage.next_items_page.items);
-    cursor = nextPage.next_items_page.cursor;
-  }
-
-  return allItems;
-}
+import {
+  type RawItem,
+  parseEquipmentUnit,
+  parseReservation,
+  fetchAllBoardItems,
+  fetchAllReservations,
+} from '../services/board-data';
+import type { DateRange, AvailabilityResult, BoardConfig, DemandLine } from '../types';
 
 export async function fetchAvailabilityForFamily(
   linkedUnitId: string,
@@ -147,24 +29,11 @@ export async function fetchAvailabilityForFamily(
   if (!linkedUnit) return emptyResult;
 
   const modelName = linkedUnit.name;
-  console.log('[INA Stock] Linked unit:', linkedUnitId, '→ model:', modelName);
 
   const allItems = await fetchAllBoardItems(config.equipementsBoardId);
   const sameModelItems = allItems.filter(item => item.name === modelName);
-  console.log('[INA Stock] Found', sameModelItems.length, 'units of model:', modelName);
 
   if (sameModelItems.length === 0) return emptyResult;
-
-  if (sameModelItems[0]) {
-    const sample = sameModelItems[0];
-    const statusCol = sample.column_values.find(c => c.id === config.statutEquipementColumnId);
-    console.log('[INA Stock] Equipment status column:', JSON.stringify({
-      columnId: config.statutEquipementColumnId,
-      text: statusCol?.text,
-      value: statusCol?.value,
-      allCols: sample.column_values.map(c => ({ id: c.id, text: c.text?.slice(0, 30) })),
-    }));
-  }
 
   const equipment = sameModelItems.map(item => parseEquipmentUnit(item, config));
   const equipmentIds = new Set(equipment.map(eq => eq.id));
@@ -177,8 +46,6 @@ export async function fetchAvailabilityForFamily(
       allReservations.push(r);
     }
   }
-
-  console.log('[INA Stock] Reservations found for model:', allReservations.length);
 
   return computeAvailability(equipment, allReservations, dateRange);
 }
@@ -206,12 +73,12 @@ export function useMultiAvailability(
           const avail = await fetchAvailabilityForFamily(line.familyId, dateRange, config);
           newResults.set(i, avail);
         } catch (err) {
-          console.error(`[INA Stock] Availability error for line ${i}:`, err);
+          // silently skip failed lines
         }
       }
       setResults(newResults);
     } catch (err) {
-      console.error('[INA Stock] Multi-availability error:', err);
+      // silently ignore
     } finally {
       setLoading(false);
     }

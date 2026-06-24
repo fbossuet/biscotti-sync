@@ -1,26 +1,3 @@
-export const GET_SUBITEM_CONTEXT = `
-  query GetSubitemContext($itemId: [ID!]!) {
-    items(ids: $itemId) {
-      id
-      name
-      column_values {
-        id
-        text
-        value
-      }
-      parent_item {
-        id
-        name
-        column_values {
-          id
-          text
-          value
-        }
-      }
-    }
-  }
-`;
-
 export const GET_DEMAND_WITH_SUBITEMS = `
   query GetDemandWithSubitems($itemId: [ID!]!) {
     items(ids: $itemId) {
@@ -47,27 +24,6 @@ export const GET_DEMAND_WITH_SUBITEMS = `
   }
 `;
 
-export const GET_EQUIPMENT_BY_FAMILY = `
-  query GetEquipmentByFamily($boardId: ID!, $columnId: String!, $familyItemId: String!) {
-    items_page_by_column_values(
-      board_id: $boardId
-      limit: 500
-      columns: [{ column_id: $columnId, column_values: [$familyItemId] }]
-    ) {
-      cursor
-      items {
-        id
-        name
-        column_values {
-          id
-          text
-          value
-        }
-      }
-    }
-  }
-`;
-
 export const GET_EQUIPMENT_PAGE = `
   query GetEquipmentPage($cursor: String!) {
     next_items_page(limit: 500, cursor: $cursor) {
@@ -78,51 +34,6 @@ export const GET_EQUIPMENT_PAGE = `
         column_values {
           id
           text
-        }
-      }
-    }
-  }
-`;
-
-export const GET_RESERVATIONS_FOR_EQUIPMENT = `
-  query GetReservationsForEquipment($boardId: ID!, $columnId: String!, $equipmentId: String!) {
-    items_page_by_column_values(
-      board_id: $boardId
-      limit: 500
-      columns: [{ column_id: $columnId, column_values: [$equipmentId] }]
-    ) {
-      cursor
-      items {
-        id
-        name
-        column_values {
-          id
-          text
-          value
-          ... on BoardRelationValue {
-            linked_item_ids
-          }
-        }
-      }
-    }
-  }
-`;
-
-export const GET_FAMILIES_BY_SOUS_FAMILLE = `
-  query GetFamiliesBySousFamille($boardId: ID!, $columnId: String!, $sousFamille: String!) {
-    items_page_by_column_values(
-      board_id: $boardId
-      limit: 500
-      columns: [{ column_id: $columnId, column_values: [$sousFamille] }]
-    ) {
-      cursor
-      items {
-        id
-        name
-        column_values {
-          id
-          text
-          value
         }
       }
     }

@@ -3,15 +3,18 @@ import { colors } from '../../constants/design-tokens';
 
 interface Props {
   message: string;
+  variant?: 'success' | 'error';
   onClose: () => void;
   duration?: number;
 }
 
-export const Toast: React.FC<Props> = ({ message, onClose, duration = 3500 }) => {
+export const Toast: React.FC<Props> = ({ message, variant = 'success', onClose, duration = 3500 }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, duration);
     return () => clearTimeout(timer);
   }, [onClose, duration]);
+
+  const isError = variant === 'error';
 
   return (
     <div style={{
@@ -22,9 +25,10 @@ export const Toast: React.FC<Props> = ({ message, onClose, duration = 3500 }) =>
       animation: 'scToast .2s ease',
     }}>
       <span style={{
-        width: 20, height: 20, borderRadius: 99, background: '#00c875',
+        width: 20, height: 20, borderRadius: 99,
+        background: isError ? '#e2445c' : '#00c875',
         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
-      }}>&#x2713;</span>
+      }}>{isError ? '✗' : '✓'}</span>
       {message}
     </div>
   );

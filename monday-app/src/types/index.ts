@@ -19,36 +19,11 @@ export interface Family {
   quantiteLS: number;
 }
 
-export interface Reservation {
-  id: string;
-  equipmentId: string;
-  equipmentName: string;
-  serial: string;
-  barcode: string;
-  familyName: string;
-  dateFrom: string;
-  dateTo: string;
-  demandId: string;
-  status: ReservationStatus;
-}
-
 export type ReservationStatus = 'pre_reserve' | 'confirme' | 'en_cours' | 'termine' | 'annule';
 
 export interface DateRange {
   from: string;
   to: string;
-}
-
-/** @deprecated Use DemandOverview + DemandLine instead */
-export interface DemandContext {
-  itemId: string;
-  parentItemId: string;
-  sousFamille: string;
-  familyId: string;
-  familyName: string;
-  os: string;
-  dateRange: DateRange;
-  quantite: number;
 }
 
 export interface DemandLine {
@@ -120,4 +95,5 @@ export interface BoardConfig {
   statutReservationColumnId: string;
   connexionEquipementColumnId: string;
   connexionDemandeColumnId: string;
+  formationNameColumnId: string;
 }
