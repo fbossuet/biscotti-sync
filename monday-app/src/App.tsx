@@ -160,7 +160,7 @@ export const App: React.FC = () => {
       }
 
       console.log('[INA Stock] Calling reserve with', quantity, 'units');
-      await reserve(
+      const created = await reserve(
         freshAvail.available,
         quantity,
         demand.dateRange,
@@ -168,6 +168,27 @@ export const App: React.FC = () => {
         targetModelName,
         modal.lineIndex,
       );
+
+      const postAvail = await fetchAvailabilityForFamily(targetFamilyId, demand.dateRange, config);
+      const stillAvailIds = new Set(postAvail.available.map(u => u.id));
+      const conflicts = created.filter(r => !stillAvailIds.has(r.unitId));
+
+      if (conflicts.length > 0) {
+        for (const c of conflicts) {
+          await cancel(c.id, c.unitId);
+        }
+        const kept = created.length - conflicts.length;
+        if (kept > 0) {
+          setModal(null);
+          setToast(`${kept} unité(s) réservée(s) pour ${targetModelName} — ${conflicts.length} annulée(s) (conflit avec un autre utilisateur)`);
+        } else {
+          setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
+          searchAlternatives(targetModelName, demand.dateRange, config, targetFamilyId);
+          setToast(`Conflit : les unités ont été réservées par un autre utilisateur`);
+        }
+        refresh();
+        return;
+      }
 
       const newReserved = getReservedCountForLine(modal.lineIndex) + quantity;
       if (newReserved >= line.quantite) {
@@ -185,7 +206,7 @@ export const App: React.FC = () => {
     } finally {
       setConfirming(false);
     }
-  }, [demand, modal, lines, config, reserve, refresh, getReservedCountForLine, confirming]);
+  }, [demand, modal, lines, config, reserve, cancel, refresh, getReservedCountForLine, confirming, searchAlternatives]);
 
   const handleCancel = useCallback(async (reservationId: string, unitId: string) => {
     await cancel(reservationId, unitId);
