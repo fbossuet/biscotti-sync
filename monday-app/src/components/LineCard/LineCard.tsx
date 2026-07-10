@@ -35,7 +35,6 @@ export const LineCard: React.FC<Props> = ({
   const covered = reservedCount >= line.quantite;
   const remaining = Math.max(0, line.quantite - reservedCount);
   const availCount = availability?.availableCount ?? 0;
-  const total = availability?.total ?? 0;
 
   return (
     <div style={{
@@ -55,8 +54,13 @@ export const LineCard: React.FC<Props> = ({
           <div style={{ fontSize: 13.5, fontWeight: 600, color: colors.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
             {line.familyName}
           </div>
-          <div style={{ fontSize: 12, color: colors.text.muted, marginTop: 2 }}>
-            {line.quantite} unité{line.quantite > 1 ? 's' : ''} demandée{line.quantite > 1 ? 's' : ''}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 3 }}>
+            <span style={{ fontSize: 16, fontWeight: 800, color: accent, lineHeight: 1 }}>
+              {line.quantite}
+            </span>
+            <span style={{ fontSize: 12, color: colors.text.muted }}>
+              unité{line.quantite > 1 ? 's' : ''} demandée{line.quantite > 1 ? 's' : ''}
+            </span>
           </div>
         </div>
 
@@ -66,13 +70,13 @@ export const LineCard: React.FC<Props> = ({
 
         {!loading && availability && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            {/* Availability badge */}
+            {/* Availability badge — nb d'unités libres sur la période (indépendant du besoin) */}
             <span style={{
               fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 99,
               background: availCount > 0 ? '#e9f7ef' : '#f1f2f6',
               color: availCount > 0 ? '#00854d' : '#676879',
             }}>
-              {availCount} / {total} dispo
+              {availCount} dispo
             </span>
 
             {/* Coverage badge */}
