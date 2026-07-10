@@ -152,21 +152,30 @@ const EpuiseStep: React.FC<{
   alternativesLoading?: boolean;
   onClose: () => void;
   onSelectAlternative?: (modelName: string) => void;
-}> = ({ accent, alternatives, alternativesLoading, onClose, onSelectAlternative }) => (
+}> = ({ accent, alternatives, alternativesLoading, onClose, onSelectAlternative }) => {
+  // "Plus aucune unite" (dead-end rouge) uniquement si la recherche d'equivalences
+  // est terminee ET n'a rien trouve. Sinon on introduit les equivalences (orange).
+  const noAlternatives = !alternativesLoading && !!alternatives && alternatives.length === 0;
+
+  return (
   <>
     <div style={{ padding: '22px 24px 6px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
         <span style={{
-          width: 30, height: 30, borderRadius: 8, background: '#fdf2f3',
+          width: 30, height: 30, borderRadius: 8,
+          background: noAlternatives ? '#fdf2f3' : '#fff4e3',
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
-        }}>&#x1F6AB;</span>
+        }}>{noAlternatives ? '\u{1F6AB}' : '⚠️'}</span>
         <div style={{
           fontSize: 12, fontWeight: 700, letterSpacing: '.5px',
-          textTransform: 'uppercase' as const, color: colors.danger.text,
-        }}>Plus aucune unite</div>
+          textTransform: 'uppercase' as const,
+          color: noAlternatives ? colors.danger.text : '#9c5a00',
+        }}>{noAlternatives ? 'Plus aucune unite' : 'Modele indisponible'}</div>
       </div>
       <div style={{ fontSize: 13.5, color: colors.text.body, lineHeight: 1.55 }}>
-        Plus aucune unite de ce modele n'est disponible sur la periode.
+        {noAlternatives
+          ? "Plus aucune unite de ce modele n'est disponible sur la periode."
+          : "Ce modele est complet sur la periode."}
       </div>
     </div>
 
@@ -232,4 +241,5 @@ const EpuiseStep: React.FC<{
       }}>Fermer</button>
     </div>
   </>
-);
+  );
+};
