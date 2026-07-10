@@ -35,6 +35,9 @@ const DEFAULT_CONFIG: AppConfig = {
   connexionDemandeColumnId: 'board_relation_mm4jaj64',
   formationNameColumnId: 'text_mm295wsj',
   materielRequisColumnId: 'dropdown_mm29dfgd',
+  serialColumnId: 'text_mm4ke2cy',
+  tagColumnId: 'text_mm51c6hv',
+  localColumnId: 'text_mm3ynk0g',
   sousFamilleColumnId: 'color_mm3x282f',
   osColumnId: 'color_mm29yn1b',
 };
@@ -87,6 +90,10 @@ export const App: React.FC = () => {
     if (line.error) return false;
     return getReservedCountForLine(i) >= line.quantite;
   }).length;
+
+  const nonErrorLineCount = lines.filter(l => !l.error).length;
+  const allCovered = nonErrorLineCount > 0 && coveredLines === nonErrorLineCount;
+  const reservedModels = Array.from(new Set(lines.filter(l => !l.error).map(l => l.familyName)));
 
   const openModal = useCallback((lineIndex: number) => {
     const line = lines[lineIndex];
@@ -303,6 +310,27 @@ export const App: React.FC = () => {
         coveredLines={coveredLines}
         accent={ACCENT}
       />
+
+      {allCovered && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+          background: '#e9f7ef', border: '1px solid #b6e6cb', borderRadius: 12,
+          padding: '14px 18px',
+        }}>
+          <span style={{ fontSize: 20, lineHeight: 1.2 }}>{'✅'}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0b6b3a' }}>
+              Demande entièrement couverte
+            </div>
+            <div style={{ fontSize: 13, color: '#1c6b45', marginTop: 3, lineHeight: 1.5 }}>
+              {resLines.length} unité{resLines.length > 1 ? 's' : ''} réservée{resLines.length > 1 ? 's' : ''}
+              {reservedModels.length > 0 && ` (${reservedModels.join(', ')})`} · {dateRangeStr}.
+              <br />
+              Détail des unités attribuées ci-dessous — pensez à préparer puis remettre le matériel sur la période.
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
         <span style={{ width: 8, height: 8, borderRadius: 99, background: ACCENT }} />

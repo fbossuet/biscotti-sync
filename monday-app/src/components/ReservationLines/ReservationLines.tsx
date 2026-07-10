@@ -43,7 +43,11 @@ export const ReservationLines: React.FC<Props> = ({ lines, onCancel }) => {
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: colors.text.body }}>{l.model}</div>
                 <div style={{ fontSize: 11.5, color: colors.text.muted, fontFamily: fonts.mono }}>
-                  {l.serial} · {l.barcode}
+                  {[
+                    l.serial ? `S/N ${l.serial}` : null,
+                    l.tag ? `TAG ${l.tag}` : null,
+                    l.local ? `\u{1F4CD} ${l.local}` : null,
+                  ].filter(Boolean).join('  ·  ') || 'Identifiants non renseignés'}
                 </div>
               </div>
             </div>

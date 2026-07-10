@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { apiCall } from '../services/monday-api';
 import { CREATE_RESERVATION, DELETE_RESERVATION } from '../services/mutations';
 import { selectUnitsToReserve } from '../services/availability';
-import { type RawItem, fetchAllReservations } from '../services/board-data';
+import { type RawItem, fetchAllReservations, fetchUnitDetails } from '../services/board-data';
 import type { Equipment, DateRange, DemandLine, ReservationLine, BoardConfig } from '../types';
 
 export function useReservations(config: BoardConfig, demandLines?: DemandLine[]) {
@@ -19,7 +19,7 @@ export function useReservations(config: BoardConfig, demandLines?: DemandLine[])
     setLoadingExisting(true);
 
     fetchAllReservations(config.reservationsBoardId)
-      .then(allResItems => {
+      .then(async allResItems => {
         const existing: ReservationLine[] = [];
         const existingUnitIds = new Set<string>();
 
@@ -57,7 +57,11 @@ export function useReservations(config: BoardConfig, demandLines?: DemandLine[])
         }
 
         if (existing.length > 0) {
-          setLines(existing);
+          const details = await fetchUnitDetails(existing.map(l => l.unitId), config);
+          setLines(existing.map(l => {
+            const d = details.get(l.unitId);
+            return d ? { ...l, model: d.model || l.model, serial: d.serial, tag: d.tag, local: d.local } : l;
+          }));
           setReservedIds(existingUnitIds);
         }
       })
@@ -88,6 +92,9 @@ export function useReservations(config: BoardConfig, demandLines?: DemandLine[])
           [config.connexionDemandeColumnId]: {
             item_ids: [parseInt(demandItemId, 10)],
           },
+          // Spec §5 : la réservation est créée en "Pré-réservé" (statut bloquant
+          // pour le calcul de dispo). Le label est créé s'il manque sur le board.
+          [config.statutReservationColumnId]: { label: 'Pré-réservé' },
         };
 
         const columnValues = JSON.stringify(colVals);
@@ -110,14 +117,21 @@ export function useReservations(config: BoardConfig, demandLines?: DemandLine[])
         });
       }
 
-      setLines(prev => [...prev, ...newLines]);
+      // Enrichir avec le détail physique (n° série / TAG INA / local) pour le récap.
+      const details = await fetchUnitDetails(newLines.map(l => l.unitId), config);
+      const enriched = newLines.map(l => {
+        const d = details.get(l.unitId);
+        return d ? { ...l, model: d.model || l.model, serial: d.serial, tag: d.tag, local: d.local } : l;
+      });
+
+      setLines(prev => [...prev, ...enriched]);
       setReservedIds(prev => {
         const next = new Set(prev);
-        newLines.forEach(l => next.add(l.unitId));
+        enriched.forEach(l => next.add(l.unitId));
         return next;
       });
 
-      return newLines;
+      return enriched;
     },
     [config],
   );

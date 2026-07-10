@@ -77,6 +77,8 @@ export interface ReservationLine {
   model: string;
   serial: string;
   barcode: string;
+  tag?: string;
+  local?: string;
   dateRange: string;
   lineIndex: number;
 }
@@ -97,4 +99,7 @@ export interface BoardConfig {
   connexionDemandeColumnId: string;
   formationNameColumnId: string;
   materielRequisColumnId: string;
+  serialColumnId: string;
+  tagColumnId: string;
+  localColumnId: string;
 }

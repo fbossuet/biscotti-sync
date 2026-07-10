@@ -4,9 +4,45 @@ import {
   GET_EQUIPMENT_PAGE,
   GET_RESERVATION_BOARD_ITEMS,
   GET_RESERVATION_BOARD_PAGE,
+  GET_UNITS_DETAILS,
 } from './queries';
 import type { ReservationRecord } from './availability';
 import type { Equipment, BoardConfig } from '../types';
+
+export interface UnitDetails {
+  model: string;
+  serial: string;
+  tag: string;
+  local: string;
+}
+
+// Détail physique des unités réservées (n° série / TAG INA / local), à la
+// demande, pour le récap. Fetch ciblé par ids — indépendant du chargement de
+// dispo (qui, lui, ne récupère que statut + réservable).
+export async function fetchUnitDetails(
+  unitIds: string[],
+  config: BoardConfig,
+): Promise<Map<string, UnitDetails>> {
+  const map = new Map<string, UnitDetails>();
+  const uniqueIds = [...new Set(unitIds)].filter(Boolean);
+  if (uniqueIds.length === 0) return map;
+
+  const data = await apiCall<{ items: RawItem[] }>(GET_UNITS_DETAILS, {
+    ids: uniqueIds,
+    columnIds: [config.serialColumnId, config.tagColumnId, config.localColumnId],
+  });
+
+  for (const item of data.items || []) {
+    const getText = (id: string) => item.column_values.find(c => c.id === id)?.text || '';
+    map.set(item.id, {
+      model: item.name,
+      serial: getText(config.serialColumnId),
+      tag: getText(config.tagColumnId),
+      local: getText(config.localColumnId),
+    });
+  }
+  return map;
+}
 
 export interface RawItem {
   id: string;
