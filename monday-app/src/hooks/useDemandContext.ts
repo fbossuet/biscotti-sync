@@ -61,17 +61,40 @@ function parseNumber(col: ColumnValue | undefined): number {
   return isNaN(n) ? 0 : n;
 }
 
+// Une "ligne de matériel" = un sous-élément qui porte un matériel (dropdown
+// « Matériel requis », lien catalogue ou quantité). Les sous-éléments de tâche
+// du workflow (Confirmer la disponibilité / Préparer / Récupérer) n'en ont aucun
+// et doivent être exclus.
+function isMaterialLine(
+  subitem: RawItem,
+  catalogueColumnId: string,
+  quantiteColumnId: string,
+  materielRequisColumnId: string,
+): boolean {
+  const hasCatalogue = !!parseConnectedItemId(findColumn(subitem.column_values, catalogueColumnId));
+  const hasMateriel = !!findColumn(subitem.column_values, materielRequisColumnId)?.text?.trim();
+  const hasQuantite = parseNumber(findColumn(subitem.column_values, quantiteColumnId)) > 0;
+  return hasCatalogue || hasMateriel || hasQuantite;
+}
+
 function parseDemandLine(
   subitem: RawItem,
   catalogueColumnId: string,
   quantiteColumnId: string,
+  materielRequisColumnId: string,
 ): DemandLine {
   const catalogueCol = findColumn(subitem.column_values, catalogueColumnId);
   const familyId = parseConnectedItemId(catalogueCol);
   const quantite = parseNumber(findColumn(subitem.column_values, quantiteColumnId));
 
+  // Nom du modèle : priorité au lien catalogue, sinon au dropdown « Matériel requis ».
+  // Le connect-board (board_relation) est rempli par une automation monday qui ne se
+  // déclenche pas toujours ; le dropdown, lui, contient le choix saisi au formulaire.
+  const materielRequis = findColumn(subitem.column_values, materielRequisColumnId)?.text?.trim() || '';
+  const modelName = catalogueCol?.text?.trim() || materielRequis;
+
   let error: string | null = null;
-  if (!familyId) {
+  if (!modelName) {
     error = 'Aucun matériel lié dans le catalogue.';
   } else if (!quantite) {
     error = 'Quantité non renseignée.';
@@ -80,7 +103,7 @@ function parseDemandLine(
   return {
     subitemId: subitem.id,
     familyId,
-    familyName: catalogueCol?.text || subitem.name,
+    familyName: modelName,
     quantite,
     error,
   };
@@ -92,6 +115,7 @@ export function useDemandContext(
     dateFormationColumnId: string;
     quantiteColumnId: string;
     connexionCatalogueColumnId: string;
+    materielRequisColumnId: string;
     formationNameColumnId: string;
   },
 ) {
@@ -122,15 +146,28 @@ export function useDemandContext(
         }
 
         const subitems = item.subitems || [];
-        if (subitems.length === 0) {
+        const materialSubitems = subitems.filter(si =>
+          isMaterialLine(
+            si,
+            config.connexionCatalogueColumnId,
+            config.quantiteColumnId,
+            config.materielRequisColumnId,
+          ),
+        );
+        if (materialSubitems.length === 0) {
           setError('Aucun sous-élément de matériel trouvé pour cette demande.');
           return;
         }
 
         const formationNameCol = findColumn(item.column_values, config.formationNameColumnId);
 
-        const lines = subitems.map(si =>
-          parseDemandLine(si, config.connexionCatalogueColumnId, config.quantiteColumnId),
+        const lines = materialSubitems.map(si =>
+          parseDemandLine(
+            si,
+            config.connexionCatalogueColumnId,
+            config.quantiteColumnId,
+            config.materielRequisColumnId,
+          ),
         );
 
         setDemand({
@@ -145,7 +182,7 @@ export function useDemandContext(
         setError(err.message || 'Erreur lors du chargement de la demande.');
       })
       .finally(() => setLoading(false));
-  }, [itemId, config.dateFormationColumnId, config.quantiteColumnId, config.connexionCatalogueColumnId]);
+  }, [itemId, config.dateFormationColumnId, config.quantiteColumnId, config.connexionCatalogueColumnId, config.materielRequisColumnId]);
 
   return { demand, loading, error };
 }

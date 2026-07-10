@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { colors, fonts } from './constants/design-tokens';
 import { useMonday } from './hooks/useMonday';
 import { useDemandContext } from './hooks/useDemandContext';
-import { useMultiAvailability, fetchAvailabilityForFamily } from './hooks/useAvailability';
+import { useMultiAvailability, fetchAvailabilityForModel } from './hooks/useAvailability';
 import { useReservations } from './hooks/useReservations';
 import { useAlternatives } from './hooks/useAlternatives';
 import { DemandContextCard } from './components/DemandContext/DemandContext';
@@ -32,6 +32,7 @@ const DEFAULT_CONFIG: AppConfig = {
   connexionEquipementColumnId: 'board_relation_mm4j1ene',
   connexionDemandeColumnId: 'board_relation_mm4jaj64',
   formationNameColumnId: 'text_mm295wsj',
+  materielRequisColumnId: 'dropdown_mm29dfgd',
   sousFamilleColumnId: 'color_mm3x282f',
   osColumnId: 'color_mm29yn1b',
 };
@@ -51,6 +52,7 @@ export const App: React.FC = () => {
     dateFormationColumnId: config.dateFormationColumnId,
     quantiteColumnId: config.quantiteColumnId,
     connexionCatalogueColumnId: config.connexionCatalogueColumnId,
+    materielRequisColumnId: config.materielRequisColumnId,
     formationNameColumnId: config.formationNameColumnId,
   });
 
@@ -97,21 +99,21 @@ export const App: React.FC = () => {
       setModal({
         step: 'epuise',
         lineIndex,
-        targetFamilyId: line.familyId!,
+        targetFamilyId: line.familyId ?? '',
         modelName: line.familyName,
         availableCount: 0,
         requested: 0,
         maxNeeded,
         proposed: 0,
       });
-      searchAlternatives(line.familyName, demand.dateRange, config, line.familyId!);
+      searchAlternatives(line.familyName, demand.dateRange, config, line.familyId ?? undefined);
       return;
     }
 
     setModal({
       step: 'saisie',
       lineIndex,
-      targetFamilyId: line.familyId!,
+      targetFamilyId: line.familyId ?? '',
       modelName: line.familyName,
       availableCount: avail.availableCount,
       requested: Math.min(maxNeeded, avail.availableCount),
@@ -133,7 +135,7 @@ export const App: React.FC = () => {
     if (!demand || !modal || confirming) return;
 
     const line = lines[modal.lineIndex];
-    if (!line?.familyId) return;
+    if (!line || line.error) return;
 
     const targetFamilyId = modal.targetFamilyId;
     const targetModelName = modal.modelName;
@@ -141,7 +143,7 @@ export const App: React.FC = () => {
     setConfirming(true);
 
     try {
-      const freshAvail = await fetchAvailabilityForFamily(targetFamilyId, demand.dateRange, config);
+      const freshAvail = await fetchAvailabilityForModel(targetModelName, demand.dateRange, config);
 
       if (freshAvail.availableCount === 0) {
         setModal(prev => prev ? { ...prev, step: 'epuise', proposed: 0 } : prev);
@@ -168,7 +170,7 @@ export const App: React.FC = () => {
         modal.lineIndex,
       );
 
-      const postAvail = await fetchAvailabilityForFamily(targetFamilyId, demand.dateRange, config);
+      const postAvail = await fetchAvailabilityForModel(targetModelName, demand.dateRange, config);
       const stillAvailIds = new Set(postAvail.available.map(u => u.id));
       const conflicts = created.filter(r => !stillAvailIds.has(r.unitId));
 

@@ -1,9 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { apiCall } from '../services/monday-api';
-import { GET_CATALOGUE_ITEM_WITH_SUBITEMS } from '../services/queries';
 import { computeAvailability, type ReservationRecord } from '../services/availability';
 import {
-  type RawItem,
   parseEquipmentUnit,
   parseReservation,
   fetchAllBoardItems,
@@ -11,8 +8,8 @@ import {
 } from '../services/board-data';
 import type { DateRange, AvailabilityResult, BoardConfig, DemandLine } from '../types';
 
-export async function fetchAvailabilityForFamily(
-  linkedUnitId: string,
+export async function fetchAvailabilityForModel(
+  modelName: string,
   dateRange: DateRange,
   config: BoardConfig,
 ): Promise<AvailabilityResult> {
@@ -21,15 +18,10 @@ export async function fetchAvailabilityForFamily(
     total: 0, availableCount: 0, reservedCount: 0, maintenanceCount: 0,
   };
 
-  const unitData = await apiCall<{ items: RawItem[] }>(
-    GET_CATALOGUE_ITEM_WITH_SUBITEMS,
-    { itemId: [linkedUnitId] },
-  );
-  const linkedUnit = unitData.items?.[0];
-  if (!linkedUnit) return emptyResult;
+  if (!modelName) return emptyResult;
 
-  const modelName = linkedUnit.name;
-
+  // La disponibilité se calcule par NOM de modèle : les unités du board
+  // d'équipements portent le nom du modèle (plusieurs unités = même nom).
   const allItems = await fetchAllBoardItems(config.equipementsBoardId);
   const sameModelItems = allItems.filter(item => item.name === modelName);
 
@@ -67,10 +59,10 @@ export function useMultiAvailability(
     try {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (!line.familyId || line.error) continue;
+        if (line.error || !line.familyName) continue;
 
         try {
-          const avail = await fetchAvailabilityForFamily(line.familyId, dateRange, config);
+          const avail = await fetchAvailabilityForModel(line.familyName, dateRange, config);
           newResults.set(i, avail);
         } catch (err) {
           // silently skip failed lines

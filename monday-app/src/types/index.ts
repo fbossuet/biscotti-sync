@@ -96,4 +96,5 @@ export interface BoardConfig {
   connexionEquipementColumnId: string;
   connexionDemandeColumnId: string;
   formationNameColumnId: string;
+  materielRequisColumnId: string;
 }
