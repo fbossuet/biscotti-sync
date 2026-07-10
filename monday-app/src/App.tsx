@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { colors, fonts } from './constants/design-tokens';
 import { useMonday } from './hooks/useMonday';
 import { useDemandContext } from './hooks/useDemandContext';
 import { useMultiAvailability, fetchAvailabilityForModel } from './hooks/useAvailability';
 import { fetchAllReservations, parseReservation } from './services/board-data';
+import { resolveConfig } from './services/config-resolver';
 import { hasOverlap, isActiveReservation, type ReservationRecord } from './services/availability';
 import { useReservations } from './hooks/useReservations';
 import { useAlternatives } from './hooks/useAlternatives';
@@ -47,17 +48,26 @@ const ACCENT = colors.accent;
 export const App: React.FC = () => {
   const { context, settings, loading: ctxLoading } = useMonday();
 
-  // Config = valeurs par défaut surchargées par les settings du widget (ids de
-  // boards/colonnes propres à chaque installation). Seules les valeurs texte
-  // non vides surchargent → une installation non configurée retombe sur les
-  // défauts, ce qui permet d'installer l'app sur un autre compte sans recompiler.
-  const config = useMemo<AppConfig>(() => {
+  // Config de base = défauts surchargés par les settings texte non vides du widget.
+  const baseConfig = useMemo<AppConfig>(() => {
     const overrides: Record<string, string> = {};
     for (const [key, value] of Object.entries(settings)) {
       if (typeof value === 'string' && value.trim()) overrides[key] = value.trim();
     }
     return { ...DEFAULT_CONFIG, ...overrides } as AppConfig;
   }, [settings]);
+
+  // Config effective : auto-mapping des colonnes à partir des seuls ids de boards
+  // (installation sur un autre compte = 3 boards à renseigner, colonnes détectées).
+  // Court-circuité pour INA (boards par défaut) → baseConfig inchangé.
+  const [config, setConfig] = useState<AppConfig>(baseConfig);
+  useEffect(() => {
+    let cancelled = false;
+    resolveConfig(baseConfig, context?.boardId)
+      .then(resolved => { if (!cancelled) setConfig(resolved); })
+      .catch(() => { if (!cancelled) setConfig(baseConfig); });
+    return () => { cancelled = true; };
+  }, [baseConfig, context?.boardId]);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
   const [confirming, setConfirming] = useState(false);

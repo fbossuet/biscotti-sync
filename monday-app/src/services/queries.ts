@@ -63,6 +63,20 @@ export const GET_CATALOGUE_ITEM_WITH_SUBITEMS = `
   }
 `;
 
+export const GET_BOARDS_SCHEMA = `
+  query GetBoardsSchema($ids: [ID!]!) {
+    boards(ids: $ids) {
+      id
+      columns {
+        id
+        title
+        type
+        settings_str
+      }
+    }
+  }
+`;
+
 export const GET_UNITS_DETAILS = `
   query GetUnitsDetails($ids: [ID!]!, $columnIds: [String!]) {
     items(ids: $ids) {
