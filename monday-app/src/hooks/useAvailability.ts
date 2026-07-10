@@ -51,7 +51,7 @@ export async function fetchAvailabilityForModel(
 ): Promise<AvailabilityResult> {
   if (!modelName) return EMPTY_RESULT;
   const [allItems, allResItems] = await Promise.all([
-    fetchAllBoardItems(config.equipementsBoardId),
+    fetchAllBoardItems(config.equipementsBoardId, [config.statutEquipementColumnId, config.reservableColumnId]),
     fetchAllReservations(config.reservationsBoardId),
   ]);
   return computeModelAvailability(modelName, allItems, allResItems, dateRange, config);

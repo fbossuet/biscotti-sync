@@ -81,10 +81,13 @@ export function parseReservation(item: RawItem, config: BoardConfig): Reservatio
   return { equipmentId, dateFrom, dateTo, status: statusCol?.text || 'pre_reserve' };
 }
 
-export async function fetchAllBoardItems(boardId: string): Promise<RawItem[]> {
+// columnIds : ne récupérer que les colonnes réellement exploitées (payload
+// bien plus léger sur un board de ~1000 items). Le nom de l'item est toujours
+// renvoyé (champ de haut niveau, hors column_values).
+export async function fetchAllBoardItems(boardId: string, columnIds?: string[]): Promise<RawItem[]> {
   const firstPage = await apiCall<{
     boards: [{ items_page: { cursor: string | null; items: RawItem[] } }];
-  }>(GET_BOARD_ITEMS, { boardId });
+  }>(GET_BOARD_ITEMS, { boardId, columnIds });
 
   const page = firstPage.boards?.[0]?.items_page;
   if (!page) return [];
@@ -95,7 +98,7 @@ export async function fetchAllBoardItems(boardId: string): Promise<RawItem[]> {
   while (cursor) {
     const nextPage = await apiCall<{
       next_items_page: { cursor: string | null; items: RawItem[] };
-    }>(GET_EQUIPMENT_PAGE, { cursor });
+    }>(GET_EQUIPMENT_PAGE, { cursor, columnIds });
 
     allItems.push(...nextPage.next_items_page.items);
     cursor = nextPage.next_items_page.cursor;

@@ -25,13 +25,13 @@ export const GET_DEMAND_WITH_SUBITEMS = `
 `;
 
 export const GET_EQUIPMENT_PAGE = `
-  query GetEquipmentPage($cursor: String!) {
+  query GetEquipmentPage($cursor: String!, $columnIds: [String!]) {
     next_items_page(limit: 500, cursor: $cursor) {
       cursor
       items {
         id
         name
-        column_values {
+        column_values(ids: $columnIds) {
           id
           text
         }
@@ -64,14 +64,14 @@ export const GET_CATALOGUE_ITEM_WITH_SUBITEMS = `
 `;
 
 export const GET_BOARD_ITEMS = `
-  query GetBoardItems($boardId: ID!) {
+  query GetBoardItems($boardId: ID!, $columnIds: [String!]) {
     boards(ids: [$boardId]) {
       items_page(limit: 500) {
         cursor
         items {
           id
           name
-          column_values {
+          column_values(ids: $columnIds) {
             id
             text
           }

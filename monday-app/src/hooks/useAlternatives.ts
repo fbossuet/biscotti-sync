@@ -32,7 +32,11 @@ export async function fetchAlternatives(
       resolvedModelName = linkedUnit.name;
     }
   }
-  const allItems = await fetchAllBoardItems(config.equipementsBoardId);
+  const allItems = await fetchAllBoardItems(config.equipementsBoardId, [
+    config.statutEquipementColumnId,
+    config.reservableColumnId,
+    config.sousFamilleColumnId,
+  ]);
 
   const currentItem = allItems.find(item => item.name === resolvedModelName);
   if (!currentItem) return [];
