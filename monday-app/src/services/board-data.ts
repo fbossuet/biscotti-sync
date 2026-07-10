@@ -78,7 +78,7 @@ export function parseReservation(item: RawItem, config: BoardConfig): Reservatio
   if (!dateFrom || !dateTo) return null;
 
   const statusCol = getCol(config.statutReservationColumnId);
-  return { equipmentId, dateFrom, dateTo, status: statusCol?.text || 'pre_reserve' };
+  return { id: item.id, equipmentId, dateFrom, dateTo, status: statusCol?.text || 'pre_reserve' };
 }
 
 // columnIds : ne récupérer que les colonnes réellement exploitées (payload

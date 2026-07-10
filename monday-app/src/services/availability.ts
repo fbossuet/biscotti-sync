@@ -10,10 +10,18 @@ export function isBlockingStatus(status: string): boolean {
 }
 
 export interface ReservationRecord {
+  id: string;
   equipmentId: string;
   dateFrom: string;
   dateTo: string;
   status: string;
+}
+
+// Une réservation est "active" (elle bloque l'unité) si son statut est pré-réservé
+// / confirmé / en cours. Un statut vide est traité comme pré-réservé (bloquant).
+export function isActiveReservation(status: string): boolean {
+  const s = status.toLowerCase().replace(/[éè]/g, 'e').replace(/-/g, '_');
+  return ['pre_reserve', 'confirme', 'en_cours', 'en cours'].includes(s);
 }
 
 export function computeAvailability(
@@ -37,8 +45,7 @@ export function computeAvailability(
       r =>
         r.equipmentId === eq.id &&
         hasOverlap(dateRange, { from: r.dateFrom, to: r.dateTo }) &&
-        ['pre_reserve', 'confirme', 'en_cours', 'pré-réservé', 'confirmé', 'en cours']
-          .includes(r.status.toLowerCase().replace(/[éè]/g, 'e').replace(/-/g, '_')),
+        isActiveReservation(r.status),
     );
 
     if (hasConflict) {

@@ -3,6 +3,8 @@ import { colors, fonts } from './constants/design-tokens';
 import { useMonday } from './hooks/useMonday';
 import { useDemandContext } from './hooks/useDemandContext';
 import { useMultiAvailability, fetchAvailabilityForModel } from './hooks/useAvailability';
+import { fetchAllReservations, parseReservation } from './services/board-data';
+import { hasOverlap, isActiveReservation, type ReservationRecord } from './services/availability';
 import { useReservations } from './hooks/useReservations';
 import { useAlternatives } from './hooks/useAlternatives';
 import { DemandContextCard } from './components/DemandContext/DemandContext';
@@ -170,9 +172,21 @@ export const App: React.FC = () => {
         modal.lineIndex,
       );
 
-      const postAvail = await fetchAvailabilityForModel(targetModelName, demand.dateRange, config);
-      const stillAvailIds = new Set(postAvail.available.map(u => u.id));
-      const conflicts = created.filter(r => !stillAvailIds.has(r.unitId));
+      // Détection TOCTOU : une unité n'est en conflit que si une AUTRE réservation
+      // (id différent des miennes) chevauche la période sur la même unité. On ne
+      // compte donc PAS mes propres réservations fraîches comme un conflit.
+      const myResIds = new Set(created.map(r => r.id));
+      const freshRes = (await fetchAllReservations(config.reservationsBoardId))
+        .map(it => parseReservation(it, config))
+        .filter((r): r is ReservationRecord => r !== null);
+      const conflicts = created.filter(c =>
+        freshRes.some(r =>
+          !myResIds.has(r.id) &&
+          r.equipmentId === c.unitId &&
+          hasOverlap(demand.dateRange, { from: r.dateFrom, to: r.dateTo }) &&
+          isActiveReservation(r.status),
+        ),
+      );
 
       if (conflicts.length > 0) {
         for (const c of conflicts) {
