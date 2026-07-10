@@ -1,8 +1,8 @@
 {
   "id": "ina-stock-widget",
-  "name": "INA Stock Widget",
-  "version": "1.0.0",
-  "description": "Widget de gestion de stock et réservation d'équipements pour INA Campus",
+  "name": "Stock & Réservation par plage de dates",
+  "version": "1.1.0",
+  "description": "Vérification de disponibilité et réservation d'équipements sur une plage de dates flottante. Configurable via les paramètres du widget (boards et colonnes).",
   "features": [
     {
       "type": "ItemView",
@@ -17,90 +17,103 @@
       "settings": {
         "famillesBoardId": {
           "type": "text",
-          "title": "Board ID - Familles d'équipements",
-          "description": "ID du tableau catalogue des familles"
+          "title": "Board — Catalogue / familles",
+          "description": "ID du tableau catalogue (familles / modèles)."
         },
         "equipementsBoardId": {
           "type": "text",
-          "title": "Board ID - Equipements individuels",
-          "description": "ID du tableau inventaire des équipements"
+          "title": "Board — Équipements individuels (réservables)",
+          "description": "ID du tableau des unités physiques réservables."
         },
         "reservationsBoardId": {
           "type": "text",
-          "title": "Board ID - Réservations",
-          "description": "ID du tableau des réservations"
+          "title": "Board — Réservations",
+          "description": "ID du tableau où sont créées les réservations."
         },
         "dateFormationColumnId": {
           "type": "text",
-          "title": "Column ID - Date formation (parent)",
-          "description": "Colonne plage de dates sur la demande parente",
-          "defaultValue": "date_formation"
+          "title": "Demande — Plage de dates",
+          "description": "Colonne (timeline) de la période sur la demande parente."
+        },
+        "formationNameColumnId": {
+          "type": "text",
+          "title": "Demande — Intitulé / formation",
+          "description": "Colonne texte affichée comme intitulé de la demande."
         },
         "quantiteColumnId": {
           "type": "text",
-          "title": "Column ID - Quantité (sous-élément)",
-          "description": "Colonne quantité requise",
-          "defaultValue": "quantite"
+          "title": "Ligne — Quantité demandée",
+          "description": "Colonne nombre sur le sous-élément de demande."
+        },
+        "materielRequisColumnId": {
+          "type": "text",
+          "title": "Ligne — Matériel requis",
+          "description": "Colonne dropdown du modèle demandé (fallback si le lien catalogue est vide)."
         },
         "connexionCatalogueColumnId": {
           "type": "text",
-          "title": "Column ID - Connexion catalogue (sous-élément)",
-          "description": "Colonne de lien vers le catalogue",
-          "defaultValue": "connexion_catalogue"
+          "title": "Ligne — Lien vers le catalogue",
+          "description": "Colonne connect-boards vers le catalogue."
         },
         "statutEquipementColumnId": {
           "type": "text",
-          "title": "Column ID - Statut (équipement)",
-          "description": "Colonne statut sur l'équipement individuel",
-          "defaultValue": "statut"
+          "title": "Équipement — Statut",
+          "description": "Colonne statut (disponible / maintenance / hors service…)."
         },
         "connexionFamilleColumnId": {
           "type": "text",
-          "title": "Column ID - Connexion famille (équipement)",
-          "description": "Colonne lien vers la famille d'équipements",
-          "defaultValue": "connexion_famille"
+          "title": "Équipement — Lien famille",
+          "description": "Colonne lien vers la famille / le catalogue."
         },
         "reservableColumnId": {
           "type": "text",
-          "title": "Column ID - Réservable (équipement)",
-          "description": "Colonne checkbox réservable",
-          "defaultValue": "reservable"
-        },
-        "plageReservationColumnId": {
-          "type": "text",
-          "title": "Column ID - Plage réservation",
-          "description": "Colonne plage de dates sur la réservation",
-          "defaultValue": "plage_reservation"
-        },
-        "statutReservationColumnId": {
-          "type": "text",
-          "title": "Column ID - Statut (réservation)",
-          "description": "Colonne statut sur la réservation",
-          "defaultValue": "statut_reservation"
-        },
-        "connexionEquipementColumnId": {
-          "type": "text",
-          "title": "Column ID - Connexion équipement (réservation)",
-          "description": "Colonne lien vers l'équipement dans les réservations",
-          "defaultValue": "connexion_equipement"
-        },
-        "connexionDemandeColumnId": {
-          "type": "text",
-          "title": "Column ID - Connexion demande (réservation)",
-          "description": "Colonne lien vers la demande dans les réservations",
-          "defaultValue": "connexion_demande"
+          "title": "Équipement — Réservable (quantité)",
+          "description": "Colonne nombre ; 0 = non réservable."
         },
         "sousFamilleColumnId": {
           "type": "text",
-          "title": "Column ID - Sous-famille (catalogue)",
-          "description": "Colonne sous-famille sur le tableau catalogue",
-          "defaultValue": "sous_famille"
+          "title": "Équipement — Sous-famille",
+          "description": "Colonne sous-famille (utilisée pour proposer des équivalences)."
         },
         "osColumnId": {
           "type": "text",
-          "title": "Column ID - OS (catalogue)",
-          "description": "Colonne OS sur le tableau catalogue",
-          "defaultValue": "os"
+          "title": "Équipement — Système d'exploitation",
+          "description": "Colonne OS (optionnel)."
+        },
+        "serialColumnId": {
+          "type": "text",
+          "title": "Équipement — N° de série",
+          "description": "Colonne texte du n° de série (récap des unités réservées)."
+        },
+        "tagColumnId": {
+          "type": "text",
+          "title": "Équipement — TAG / étiquette",
+          "description": "Colonne texte du TAG d'inventaire (récap)."
+        },
+        "localColumnId": {
+          "type": "text",
+          "title": "Équipement — Local / emplacement",
+          "description": "Colonne texte du local de stock (récap)."
+        },
+        "plageReservationColumnId": {
+          "type": "text",
+          "title": "Réservation — Plage de dates",
+          "description": "Colonne timeline de la période réservée."
+        },
+        "statutReservationColumnId": {
+          "type": "text",
+          "title": "Réservation — Statut",
+          "description": "Colonne statut de la réservation (créée en « Pré-réservé »)."
+        },
+        "connexionEquipementColumnId": {
+          "type": "text",
+          "title": "Réservation — Lien équipement",
+          "description": "Colonne connect-boards vers l'unité réservée."
+        },
+        "connexionDemandeColumnId": {
+          "type": "text",
+          "title": "Réservation — Lien demande",
+          "description": "Colonne connect-boards vers le sous-élément de demande."
         }
       }
     }

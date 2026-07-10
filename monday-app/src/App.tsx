@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { colors, fonts } from './constants/design-tokens';
 import { useMonday } from './hooks/useMonday';
 import { useDemandContext } from './hooks/useDemandContext';
@@ -45,8 +45,19 @@ const DEFAULT_CONFIG: AppConfig = {
 const ACCENT = colors.accent;
 
 export const App: React.FC = () => {
-  const { context, loading: ctxLoading } = useMonday();
-  const [config] = useState<AppConfig>(DEFAULT_CONFIG);
+  const { context, settings, loading: ctxLoading } = useMonday();
+
+  // Config = valeurs par défaut surchargées par les settings du widget (ids de
+  // boards/colonnes propres à chaque installation). Seules les valeurs texte
+  // non vides surchargent → une installation non configurée retombe sur les
+  // défauts, ce qui permet d'installer l'app sur un autre compte sans recompiler.
+  const config = useMemo<AppConfig>(() => {
+    const overrides: Record<string, string> = {};
+    for (const [key, value] of Object.entries(settings)) {
+      if (typeof value === 'string' && value.trim()) overrides[key] = value.trim();
+    }
+    return { ...DEFAULT_CONFIG, ...overrides } as AppConfig;
+  }, [settings]);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
   const [confirming, setConfirming] = useState(false);

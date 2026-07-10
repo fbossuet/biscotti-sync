@@ -7,8 +7,11 @@ interface MondayContext {
   theme: string;
 }
 
+type MondaySettings = Record<string, unknown>;
+
 export function useMonday() {
   const [context, setContext] = useState<MondayContext | null>(null);
+  const [settings, setSettings] = useState<MondaySettings>({});
   const [loading, setLoading] = useState(true);
   const initialized = useRef(false);
 
@@ -23,11 +26,21 @@ export function useMonday() {
       setLoading(false);
     });
 
+    // Settings du widget (config par installation : ids de boards/colonnes).
+    monday.get('settings').then((res: { data?: MondaySettings }) => {
+      if (res?.data) setSettings(res.data);
+    });
+
     listen('context', (data: unknown) => {
       const ctx = data as { data: MondayContext };
       setContext(ctx.data);
     });
+
+    listen('settings', (data: unknown) => {
+      const s = data as { data?: MondaySettings };
+      if (s?.data) setSettings(s.data);
+    });
   }, []);
 
-  return { context, loading };
+  return { context, settings, loading };
 }
